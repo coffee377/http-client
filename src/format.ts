@@ -1,5 +1,5 @@
 import { JSONPath, JSONPathOptions } from 'jsonpath-plus';
-import { DataFormat } from './index';
+import { DataFormat } from './types';
 
 /**
  * @description 数据格式化

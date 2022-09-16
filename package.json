@@ -23,11 +23,13 @@
     "access": "public"
   },
   "devDependencies": {
+    "@types/lodash-es": "^4.17.6",
     "father": "^4.0.3",
     "prettier": "^2.7.1"
   },
   "dependencies": {
     "jsonpath-plus": "^7.2.0",
+    "lodash-es": "^4.17.21",
     "umi-request": "^1.4.0"
   }
 }
