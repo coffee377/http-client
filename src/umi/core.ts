@@ -1,4 +1,4 @@
-import { DEFAULT_APP_REQUEST_CONFIGURATION } from './window';
+import { DEFAULT_APP_REQUEST_CONFIGURATION } from '../window';
 import {
   extend as UmiRequestExtend,
   OnionMiddleware,
@@ -9,17 +9,18 @@ import {
   RequestResponse,
   ResponseInterceptor,
 } from 'umi-request';
-import { formatData } from './format';
-import { GlobalHttpRequestConfiguration, HttpRequest, HttpRequestOptions } from './types';
-import { transformParams } from './util';
+import { formatData } from '../format';
+import { GlobalHttpClientConfiguration, HttpClient, HttpClientOptions } from '../types';
+import { transformParams } from '../util';
+import { UmiRequestOptions } from './index';
 
 export type RequestInterceptorFn = (
-  options: HttpRequestOptions,
-  configuration: GlobalHttpRequestConfiguration,
+  options: UmiRequestOptions,
+  configuration: GlobalHttpClientConfiguration,
 ) => RequestInterceptor;
 export type ResponseInterceptorFn = (
-  options: HttpRequestOptions,
-  configuration: GlobalHttpRequestConfiguration,
+  options: UmiRequestOptions,
+  configuration: GlobalHttpClientConfiguration,
 ) => ResponseInterceptor;
 
 /**
@@ -28,15 +29,15 @@ export type ResponseInterceptorFn = (
  * @param conf
  */
 function finalUrl(
-    opts: HttpRequestOptions,
-    conf: GlobalHttpRequestConfiguration = DEFAULT_APP_REQUEST_CONFIGURATION,
+  opts: HttpClientOptions,
+  conf: GlobalHttpClientConfiguration = DEFAULT_APP_REQUEST_CONFIGURATION,
 ): string {
-  const {url, micro, microPrefix} = opts;
+  const { url, micro, microService, microPrefix } = opts;
   let mPrefix = micro;
   if (!mPrefix) {
     mPrefix = microPrefix;
   }
-  const {proxy, rewrite} = conf;
+  const { proxy, rewrite } = conf;
   return rewrite(url, proxy, mPrefix);
 }
 
@@ -46,11 +47,11 @@ function finalUrl(
  * @param conf
  */
 function finalPrefix(
-    opts: HttpRequestOptions,
-    conf: GlobalHttpRequestConfiguration = DEFAULT_APP_REQUEST_CONFIGURATION,
+  opts: HttpRequestOptions,
+  conf: GlobalHttpClientConfiguration = DEFAULT_APP_REQUEST_CONFIGURATION,
 ): string {
-  const {prefix} = opts;
-  const {prefix: globalPrefix, env} = conf;
+  const { prefix } = opts;
+  const { prefix: globalPrefix, env } = conf;
   if (prefix) {
     return prefix;
   } else if (typeof globalPrefix == 'string') {
@@ -71,7 +72,7 @@ function isFormData(data: any) {
  * @param configuration
  * @since 0.2.5
  */
-function resolveRequestOptionsInit(options: HttpRequestOptions, configuration: GlobalHttpRequestConfiguration = {}) {
+function resolveRequestOptionsInit(options: UmiRequestOptions, configuration: GlobalHttpClientConfiguration = {}) {
   const requestConfiguration = Object.assign({}, DEFAULT_APP_REQUEST_CONFIGURATION, configuration);
   const {upload, download} = options;
 
@@ -92,20 +93,20 @@ function resolveRequestOptionsInit(options: HttpRequestOptions, configuration: G
 
   const url = finalUrl(options, requestConfiguration);
 
-  return {url, requestOptionsInit};
+  return { url, requestOptionsInit };
 }
 
 /**
  *  @description 简化请求封装
  */
 interface IRequest {
-  request<R>(options: HttpRequestOptions): Promise<R>;
+  request<R>(options: UmiRequestOptions): Promise<R>;
 
   // extend(options?: RequestOptions, configuration?: RequestConfiguration): IRequest;
 
-  extendOptions(options?: HttpRequestOptions): void;
+  extendOptions(options?: UmiRequestOptions): void;
 
-  extendConfiguration(configuration: GlobalHttpRequestConfiguration): void;
+  extendConfiguration(configuration: GlobalHttpClientConfiguration): void;
 
   use(handler: OnionMiddleware, options?: OnionOptions): void;
 
@@ -119,17 +120,17 @@ interface IRequest {
  */
 class RequestPlus implements IRequest {
   private readonly req: RequestMethod;
-  private readonly opts: HttpRequestOptions;
-  private conf: GlobalHttpRequestConfiguration;
+  private readonly opts: UmiRequestOptions;
+  private conf: GlobalHttpClientConfiguration;
 
-  constructor(options: HttpRequestOptions = {}, configuration: GlobalHttpRequestConfiguration = {}) {
+  constructor(options: UmiRequestOptions = {}, configuration: GlobalHttpClientConfiguration = {}) {
     this.opts = options;
     this.conf = Object.assign({}, DEFAULT_APP_REQUEST_CONFIGURATION, configuration);
     const { requestOptionsInit } = resolveRequestOptionsInit(this.opts, this.conf);
     this.req = UmiRequestExtend(requestOptionsInit);
   }
 
-  async request<R = any>(options: HttpRequestOptions): Promise<R> {
+  async request<R = any>(options: UmiRequestOptions): Promise<R> {
     const { url, requestOptionsInit } = resolveRequestOptionsInit(options, this.conf);
     const { getResponse = false, responseType = 'json' } = requestOptionsInit;
     if (!url) {
@@ -159,18 +160,18 @@ class RequestPlus implements IRequest {
     return formatData<any, R>(result, resultFormat);
   }
 
-  extend(options?: HttpRequestOptions, requestConfiguration?: GlobalHttpRequestConfiguration): IRequest {
+  extend(options?: UmiRequestOptions, requestConfiguration?: GlobalHttpClientConfiguration): IRequest {
     return new RequestPlus(options, requestConfiguration);
   }
 
-  extendOptions(options?: HttpRequestOptions): void {
+  extendOptions(options?: UmiRequestOptions): void {
     if (options) {
       const { requestOptionsInit } = resolveRequestOptionsInit(options, this.conf);
       this.req.extendOptions(requestOptionsInit);
     }
   }
 
-  extendConfiguration(configuration: GlobalHttpRequestConfiguration): void {
+  extendConfiguration(configuration: GlobalHttpClientConfiguration): void {
     if (configuration) {
       this.conf = Object.assign({}, this.conf, configuration);
     }
@@ -189,7 +190,7 @@ class RequestPlus implements IRequest {
   }
 }
 
-export function extend(opts: HttpRequestOptions = {}, conf: GlobalHttpRequestConfiguration = {}): HttpRequest {
+export function extend(opts: UmiRequestOptions = {}, conf: GlobalHttpClientConfiguration = {}): HttpClient {
   const requestPlus = new RequestPlus(opts, conf);
 
   /* 1. 请求拦截处理 */
@@ -200,9 +201,9 @@ export function extend(opts: HttpRequestOptions = {}, conf: GlobalHttpRequestCon
   // requestPlus.useResponseInterceptor(responseInterceptor, {});
 
   function plus<R>(url: string): Promise<R>;
-  function plus<R>(options: HttpRequestOptions): Promise<R>;
-  function plus<R>(url: string, options: HttpRequestOptions): Promise<R>;
-  function plus<R = any>(service: string | HttpRequestOptions, options: HttpRequestOptions = {}): Promise<R> {
+  function plus<R>(options: UmiRequestOptions): Promise<R>;
+  function plus<R>(url: string, options: UmiRequestOptions): Promise<R>;
+  function plus<R = any>(service: string | UmiRequestOptions, options: UmiRequestOptions = {}): Promise<R> {
     const requestOptions = transformParams(service, options);
     return requestPlus.request<R>(requestOptions);
   }
@@ -210,21 +211,21 @@ export function extend(opts: HttpRequestOptions = {}, conf: GlobalHttpRequestCon
   /* 请求语法糖  request.get request.post …… */
   const METHODS = ['get', 'post', 'put', 'delete', 'options'];
   METHODS.forEach((method) => {
-    plus[method] = <R = any>(service: string | HttpRequestOptions, options: HttpRequestOptions = {}) => {
+    plus[method] = <R = any>(service: string | UmiRequestOptions, options: UmiRequestOptions = {}) => {
       const requestOptions = transformParams(service, options);
       return requestPlus.request<R>({ ...requestOptions, method });
     };
   });
 
-  plus.extendOptions = (options?: HttpRequestOptions) => {
+  plus.extendOptions = (options?: UmiRequestOptions) => {
     requestPlus.extendOptions(options);
   };
 
-  plus.extendConfiguration = (configuration?: GlobalHttpRequestConfiguration) => {
+  plus.extendConfiguration = (configuration?: GlobalHttpClientConfiguration) => {
     requestPlus.extendConfiguration(configuration);
   };
 
-  return plus as unknown as HttpRequest;
+  return plus as unknown as HttpClient;
 }
 
 /* 默认增强后的请求类 */

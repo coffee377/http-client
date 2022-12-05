@@ -1,9 +1,10 @@
 {
   "name": "request",
-  "version": "0.0.1",
-  "description": "A request tool based on umi-request",
+  "version": "0.3.0",
+  "description": "A http client tool based on umi-request or axios",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
+  "browser": "dist/umd/request.min.js",
   "scripts": {
     "dev": "father dev",
     "build": "father build",

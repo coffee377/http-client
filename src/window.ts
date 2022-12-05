@@ -1,11 +1,11 @@
-import { GlobalHttpRequestConfiguration } from './types';
+import { GlobalHttpClientConfiguration, TOKEN_PARAM_KEY, TOKEN_STORAGE, TOKEN_STORAGE_KEY } from './types';
 import { trimApiPrefixUrl } from './util';
 
-declare interface Window {
-  __APP_REQUEST_CONF__: GlobalHttpRequestConfiguration;
+export declare interface Window {
+  __APP_REQUEST_CONF__: GlobalHttpClientConfiguration;
 }
 
-export const DEFAULT_APP_REQUEST_CONFIGURATION: GlobalHttpRequestConfiguration = {
+export const DEFAULT_APP_REQUEST_CONFIGURATION: GlobalHttpClientConfiguration = {
   proxy: false,
   rewrite: (url, proxy, micro) => {
     if (!proxy) {
@@ -20,6 +20,7 @@ export const DEFAULT_APP_REQUEST_CONFIGURATION: GlobalHttpRequestConfiguration =
       code: 'code',
       message: 'message',
       data: 'data',
+      total: 'total',
     },
     page: {
       total: 'total',
@@ -30,9 +31,8 @@ export const DEFAULT_APP_REQUEST_CONFIGURATION: GlobalHttpRequestConfiguration =
     },
   },
   token: {
-    bearer: false,
-    key: '',
-    prefix: '',
-    storage: 'local',
+    storage: TOKEN_STORAGE,
+    storageKey: TOKEN_STORAGE_KEY,
+    paramKey: TOKEN_PARAM_KEY,
   },
 };

@@ -1,6 +1,14 @@
-import { Env, FiledInfo, GlobalHttpRequestConfiguration, HttpRequestOptions, REQUEST_PLUS_KEYS } from './types';
-import { RequestOptionsInit } from 'umi-request';
-import { getToken } from './util';
+import {
+  Env,
+  FiledInfo,
+  GlobalHttpClientConfiguration,
+  HTTP_CLIENT_KEYS,
+  MicroServiceConfiguration,
+  TokenOptions,
+} from '../types';
+import {RequestOptionsInit} from 'umi-request';
+import {UmiRequestOptions} from './index';
+import {deprecated, getToken, getTokenParamKey} from '../util';
 import {
   ForbiddenError,
   InterfaceError,
@@ -9,7 +17,7 @@ import {
   RequestOptionsError,
   UnauthorizedError,
 } from './error';
-import { omit } from 'lodash-es';
+import {merge, omit} from 'lodash-es';
 
 /**
  * 根据配置生成实际 url
@@ -17,11 +25,24 @@ import { omit } from 'lodash-es';
  * @param opts
  * @param conf
  */
-function finalUrl(urlPath: string, opts: HttpRequestOptions, conf: GlobalHttpRequestConfiguration): string {
+function finalUrl(urlPath: string, opts: UmiRequestOptions, conf: GlobalHttpClientConfiguration): string {
   const { proxy, rewrite } = conf;
-  const { micro, microPrefix } = opts;
+  const { micro } = opts;
+
+  /* 废弃属性 */
+  // ------------------------------------------------------- todo remove in next
+  deprecated(opts.microPrefix, micro, opts);
+  let microPrefix: string | string[] = opts.microPrefix;
+  // -------------------------------------------------------
+
+  /* 微服务前缀获取 */
+  if (micro) {
+    const microService: MicroServiceConfiguration = merge(conf?.microService, opts?.microService);
+    microPrefix = microService[micro];
+  }
+
   if (rewrite) {
-    return rewrite(urlPath, proxy, micro || microPrefix);
+    return rewrite(urlPath, proxy, microPrefix);
   }
   return urlPath;
 }
@@ -31,7 +52,7 @@ function finalUrl(urlPath: string, opts: HttpRequestOptions, conf: GlobalHttpReq
  * @param opts 请求参数
  * @param conf 全局配置
  */
-function finalPrefix(opts: HttpRequestOptions, conf: GlobalHttpRequestConfiguration): string {
+function finalPrefix(opts: UmiRequestOptions, conf: GlobalHttpClientConfiguration): string {
   const def: string = 'default';
   const { prefix: globalPrefix, env: globalEnv } = conf;
   const { prefix: localPrefix, env: localEnv, mock } = opts;
@@ -59,13 +80,9 @@ function finalPrefix(opts: HttpRequestOptions, conf: GlobalHttpRequestConfigurat
   let env: Env = localEnv || globalEnv;
 
   /* 局部使用 mock */
-  if (mock) {
-    env = 'mock';
-  }
+  if (mock) env = 'mock';
 
-  if (!!env) {
-    return map.get(env);
-  }
+  if (!!env && map.has(env)) return map.get(env);
 
   return map.get(def) || '';
 }
@@ -83,35 +100,40 @@ function isFormData(data: any) {
  * @param opts 请求参数
  * @param conf 全局配置
  */
-function finalHeaders(opts: HttpRequestOptions, conf: GlobalHttpRequestConfiguration): HeadersInit {
+function finalHeaders(opts: UmiRequestOptions, conf: GlobalHttpClientConfiguration): HeadersInit {
   const { headers: globalHeaders, token: globalTokenOpts } = conf;
   const { headers: localHeaders, token: localTokenOpts } = opts;
+  const tokenOptions: TokenOptions = merge(globalTokenOpts, localTokenOpts);
   /* 获取令牌 */
-  const token = getToken({ ...globalTokenOpts, ...localTokenOpts });
-  return {
-    ...globalHeaders,
-    Authorization: token,
-    ...localHeaders,
-  } as HeadersInit;
+  const accessToken = getToken('access_token', tokenOptions);
+  const accessTokenKey = getTokenParamKey('access_token', tokenOptions);
+
+  const result: HeadersInit = merge(globalHeaders, { [accessTokenKey]: accessToken }, localHeaders);
+  // return {
+  //   ...globalHeaders,
+  //   [accessTokenKey]: accessToken,
+  //   ...localHeaders,
+  // } as HeadersInit;
+  return result;
 }
 
 /**
  * 请求拦截处理
  * @param globalConfiguration
  */
-export function requestInterceptor(globalConfiguration: GlobalHttpRequestConfiguration) {
-  return (urlPath: string, options: HttpRequestOptions) => {
+export function requestInterceptor(globalConfiguration: GlobalHttpClientConfiguration) {
+  return (urlPath: string, options: UmiRequestOptions) => {
     /* 1. 实际 prefix */
     const prefix = finalPrefix(options, globalConfiguration);
 
     /* 2. 实际 url */
     const url = finalUrl(urlPath, options, globalConfiguration);
 
-    /* 请求头 */
+    /* 3. 请求头 */
     const headers = finalHeaders(options, globalConfiguration);
 
-    /* 3. 请求参数 */
-    const init = omit(options, REQUEST_PLUS_KEYS); // 剔除增强配置
+    /* 4. 请求参数 */
+    const init = omit(options, HTTP_CLIENT_KEYS); // 剔除增强配置
     const { resultFormat, filedInfo } = options;
     const opts: RequestOptionsInit = { getResponse: true, ...init, prefix, headers };
 
@@ -120,7 +142,7 @@ export function requestInterceptor(globalConfiguration: GlobalHttpRequestConfigu
       delete opts.headers?.['Content-Type'];
     }
 
-    /* 4. 上传/下载文件简化 */
+    /* 5. 上传/下载文件简化 */
     const { upload, download } = options;
     if (upload && download) throw new RequestOptionsError(`upload & download 参数不能同时为 true`);
     if (upload) opts.requestType = 'form';
@@ -135,8 +157,8 @@ export function requestInterceptor(globalConfiguration: GlobalHttpRequestConfigu
  * @description 响应拦截
  * @param globalConfiguration
  */
-function responseInterceptor(globalConfiguration: GlobalHttpRequestConfiguration) {
-  return async (response: Response, options: HttpRequestOptions) => {
+function responseInterceptor(globalConfiguration: GlobalHttpClientConfiguration) {
+  return async (response: Response, options: UmiRequestOptions) => {
     const { resultFormat: r1, filedInfo: f1, errorMapping } = globalConfiguration;
     const { resultFormat: r2, filedInfo: f2 } = options;
 
