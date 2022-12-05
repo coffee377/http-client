@@ -25,8 +25,8 @@
   },
   "devDependencies": {
     "@types/lodash-es": "^4.17.6",
-    "father": "^4.0.3",
-    "prettier": "^2.7.1"
+    "father": "^4.1.0",
+    "prettier": "^2.8.0"
   },
   "dependencies": {
     "jsonpath-plus": "^7.2.0",

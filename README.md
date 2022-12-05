@@ -8,7 +8,7 @@
 ## Install
 
 ```bash
-$ pnpm install
+$ pnpm i
 ```
 
 ```bash
