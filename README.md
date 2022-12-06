@@ -1,25 +1,60 @@
-# request
+# http-client
 
-通用前端请求工具类
+通用前端请求客户端
 
-[![NPM version](https://img.shields.io/npm/v/tets.svg?style=flat)](https://npmjs.org/package/tets)
-[![NPM downloads](http://img.shields.io/npm/dm/tets.svg?style=flat)](https://npmjs.org/package/tets)
+![npm version](https://img.shields.io/npm/v/@jqsoft/http-client)
+![npm bundle size](https://img.shields.io/bundlephobia/min/@jqsoft/http-client)
+![npm downloads](https://img.shields.io/npm/dm/@jqsoft/http-client)
 
-## Install
+## Usage
 
-```bash
-$ pnpm i
+### 通过 CDN 使用
+
+你可以借助 script 标签直接通过 CDN 来使用 http-client，在 HTML 页面的 <head> 中包含以下代码行
+
+```js
+<script src="https://unpkg.com/@jqsoft/http-client@0.3.0/dist/umd/http-client.min.js"/>
 ```
 
-```bash
-$ npm run dev
-$ npm run build
+### 通过包管理工具
+
+- Using pnpm, run the following on a command line:
+
+```shell
+pnpm add @jqsoft/http-client
 ```
 
-## Options
+- Using Yarn, run the following on a command line:
 
-TODO
+```shell
+yarn add @jqsoft/http-client
+```
 
-## LICENSE
+- Using npm, run the following on a command line:
 
-MIT
+```shell
+npm install @jqsoft/http-client
+```
+
+## Develop
+
+- 安装依赖
+
+```shell
+pnpm i
+```
+
+- 开发
+
+```shell
+pnpm run dev
+```
+
+- 构建
+
+```shell
+pnpm run build
+```
+
+## 相关文档
+

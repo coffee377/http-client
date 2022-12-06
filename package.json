@@ -1,10 +1,11 @@
 {
-  "name": "request",
+  "name": "@jqsoft/http-client",
   "version": "0.3.0",
   "description": "A http client tool based on umi-request or axios",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
-  "browser": "dist/umd/request.min.js",
+  "browser": "dist/umd/http-client.min.js",
+  "unpkg": "dist/umd/http-client.min.js",
   "scripts": {
     "dev": "father dev",
     "build": "father build",
@@ -17,8 +18,7 @@
   ],
   "license": "MIT",
   "files": [
-    "dist",
-    "compiled"
+    "dist"
   ],
   "publishConfig": {
     "access": "public"
@@ -32,5 +32,8 @@
     "jsonpath-plus": "^7.2.0",
     "lodash-es": "^4.17.21",
     "umi-request": "^1.4.0"
+  },
+  "peerDependencies": {
+    "axios": "^1.2.0"
   }
 }
