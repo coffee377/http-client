@@ -1,18 +1,6 @@
-// import type { RequestOptionsInit, RequestResponse } from 'umi-request';
 import { JSONPathOptions } from 'jsonpath-plus';
 
 type RequestMethodType = 'get' | 'post' | 'put' | 'delete' | 'options' | string;
-
-// /**
-//  * @description 请求结果
-//  */
-// export type RequestResult<R, B = false> = B extends true ? Promise<RequestResponse<R>> : Promise<R>;
-
-// export enum TokenType {
-//   ACCESS_TOKEN = 'access_token',
-//   REFRESH_TOKEN = 'refresh_token',
-//   ID_TOKEN = 'id_token',
-// }
 
 /**
  * 令牌配置

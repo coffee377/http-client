@@ -2,9 +2,9 @@
 
 通用前端请求客户端
 
-![npm version](https://img.shields.io/npm/v/@jqsoft/http-client)
-![npm bundle size](https://img.shields.io/bundlephobia/min/@jqsoft/http-client)
-![npm downloads](https://img.shields.io/npm/dm/@jqsoft/http-client)
+[![npm version](https://img.shields.io/npm/v/@jqsoft/http-client)](https://www.npmjs.com/package/@jqsoft/http-client)
+[![npm bundle size](https://img.shields.io/bundlephobia/min/@jqsoft/http-client)](https://www.npmjs.com/package/@jqsoft/http-client)
+[![npm downloads](https://img.shields.io/npm/dm/@jqsoft/http-client)](https://www.npmjs.com/package/@jqsoft/http-client)
 
 ## Usage
 
@@ -56,5 +56,11 @@ pnpm run dev
 pnpm run build
 ```
 
-## 相关文档
+## 相关资源
 
+| name          | npm                                                      |                                    备注                                     |
+|:--------------|:---------------------------------------------------------|:-------------------------------------------------------------------------:|
+| axios         | ![npm](https://img.shields.io/npm/v/axios)               |                                    单元格                                    |
+| umi-request   | ![npm](https://img.shields.io/npm/v/umi-request)         |                                    单元格                                    |
+| father        | ![npm](https://img.shields.io/npm/v/father?label=father) | [文档](https://github.com/umijs/father/blob/a96c02aee0/docs/guide/index.md) |
+| jsonpath-plus | ![npm](https://img.shields.io/npm/v/jsonpath-plus)       |                                    单元格                                    |
