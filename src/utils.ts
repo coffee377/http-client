@@ -1,15 +1,37 @@
-import {
-  HttpClientOptions,
-  TOKEN_PARAM_KEY,
-  TOKEN_STORAGE_KEY,
-  TokenOptions,
-  TokenStorageKey,
-  TokenType,
-} from './types';
+import { HttpClientOptions } from './types';
+import { TOKEN_PARAM_KEY, TOKEN_STORAGE_KEY, TokenOptions, TokenParamKey, TokenStorageKey, TokenType } from './token';
 import { merge } from 'lodash-es';
 
-export const deprecated = <T, K extends keyof T>(prop: typeof T[K], instead: typeof T[K], obj?: T) => {
-  console.warn(`${prop} is deprecated, will remove in next. Please use ${instead} instead`);
+export const DEPRECATED_MESSAGE = '{A} is deprecated, will remove in next. Please use {B} instead';
+
+/**
+ * 废弃提示信息
+ * @param prop 废弃的属性
+ * @param instead 替换的属性
+ * @param objName 配置名称
+ */
+export const deprecatedMessage = <T = string, K extends string = string>(prop: K, instead: K, objName?: T) => {
+  const obj = objName ? `${objName}.` : '';
+  return DEPRECATED_MESSAGE.replace(/\{A}(.*)\{B}(.*)/, `${obj}${prop}$1${obj}${instead}$2`);
+};
+
+/**
+ * 废弃
+ * @param obj 配置对象实例
+ * @param prop 废弃的属性
+ * @param instead 替换的属性
+ * @param objName 配置名称
+ */
+export const deprecated = <T = object, N = string, K extends string = string>(
+  obj: T,
+  prop: K,
+  instead: K,
+  objName?: N,
+) => {
+  if (Reflect.has(obj, prop)) {
+    const message = deprecatedMessage<N, K>(prop, instead, objName);
+    console.warn(message);
+  }
 };
 
 /**
@@ -22,8 +44,8 @@ export function getToken(type: TokenType = 'access_token', opts: TokenOptions = 
 
   /* 废弃属性兼容处理 */
   // ------------------------------------------------------- todo remove in next
-  deprecated(opts.bearer, accessTokenType, opts);
-  deprecated(opts.prefix, accessTokenType, opts);
+  deprecated('bearer', 'accessTokenType', 'TokenOptions');
+  deprecated('prefix', 'accessTokenType', 'TokenOptions');
   if (opts.bearer) {
     opts.accessTokenType = 'Bearer';
   } else if (opts.prefix) {
@@ -59,8 +81,8 @@ export function getToken(type: TokenType = 'access_token', opts: TokenOptions = 
  * @param opts 令牌配置
  */
 export function getTokenParamKey(type: TokenType = 'access_token', opts: TokenOptions = {}): string {
-  const { paramKey = TOKEN_PARAM_KEY } = opts;
-  return paramKey[type];
+  const result: TokenParamKey = merge(TOKEN_PARAM_KEY, opts.paramKey ?? {});
+  return result[type];
 }
 
 /**
@@ -83,16 +105,20 @@ export function slash(path: string) {
  * @param path
  */
 export function slashTrim(path: string) {
-  return slash(path).replace(/(^\/)|(\/$)/, '');
+  return slash(path).replace(/(^\/)|(\/$)/g, '');
 }
 
+/**
+ * url 路径联合
+ * @param path
+ */
 export function urlPathJoin(path?: string | string[]) {
   if (!path) return undefined;
   /* 前缀数组 */
   const arr: string[] = [];
   if (typeof path === 'string') {
     arr.push(slashTrim(path));
-  } else if (Array.isArray(path)) {
+  } else {
     const paths: string[] = path.map((m) => slashTrim(m));
     arr.push(...paths);
   }
@@ -106,22 +132,22 @@ export function urlPathJoin(path?: string | string[]) {
  * @param micro 微服务
  */
 export function trimApiPrefixUrl(url: string, micro?: string | string[]) {
-  /* 前缀数组 */
   const arr: string[] = [];
-  /* 去除默认 /api 前缀 */
-  const trimUrl = url.replace(/^\/api\/(.*)/, '$1');
-  arr.push(trimUrl);
-
+  /* 微服务前缀 */
   if (typeof micro === 'string') {
-    arr.push(slashTrim(micro));
+    arr.push(micro);
   } else if (Array.isArray(micro)) {
-    const paths: string[] = micro.map((m) => slashTrim(m));
-    arr.push(...paths);
+    arr.push(...micro);
   }
-  const result = arr.filter((p) => !!p).join('/');
-  return `/${result}`;
+  /* url 去除默认 /api 前缀 */
+  const trimUrl = url.replace(/^\/api\/?(.*)/, '$1');
+  arr.push(trimUrl);
+  return urlPathJoin(arr);
 }
 
+export function transformParams(url: string): HttpClientOptions;
+export function transformParams(opts: HttpClientOptions): HttpClientOptions;
+export function transformParams(url: string, opts: HttpClientOptions): HttpClientOptions;
 /**
  * 参数转换
  * @param service
@@ -136,8 +162,8 @@ export function transformParams(
     opts.url = service;
   } else if (arguments.length === 1 && typeof service !== 'string') {
     opts = service;
-  } else if (arguments.length === 2) {
-    opts = Object.assign({}, options, { url: service });
+  } else {
+    opts = merge(options, { url: service });
   }
   return opts;
 }

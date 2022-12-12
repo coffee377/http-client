@@ -11,7 +11,7 @@ import {
 } from 'umi-request';
 import { formatData } from '../format';
 import { GlobalHttpClientConfiguration, HttpClient, HttpClientOptions } from '../types';
-import { transformParams } from '../util';
+import { transformParams } from '../utils';
 import { UmiRequestOptions } from './index';
 
 export type RequestInterceptorFn = (
@@ -32,13 +32,15 @@ function finalUrl(
   opts: HttpClientOptions,
   conf: GlobalHttpClientConfiguration = DEFAULT_APP_REQUEST_CONFIGURATION,
 ): string {
-  const { url, micro, microService, microPrefix } = opts;
-  let mPrefix = micro;
-  if (!mPrefix) {
-    mPrefix = microPrefix;
+  const { url, microAlias, microService } = opts;
+
+  let microPrefix: string | string[] = opts.microPrefix;
+
+  if (microAlias && microService) {
+    microPrefix = microService[microAlias];
   }
   const { proxy, rewrite } = conf;
-  return rewrite(url, proxy, mPrefix);
+  return rewrite(url, proxy, microPrefix);
 }
 
 /**
@@ -47,7 +49,7 @@ function finalUrl(
  * @param conf
  */
 function finalPrefix(
-  opts: HttpRequestOptions,
+  opts: HttpClientOptions,
   conf: GlobalHttpClientConfiguration = DEFAULT_APP_REQUEST_CONFIGURATION,
 ): string {
   const { prefix } = opts;
@@ -74,7 +76,7 @@ function isFormData(data: any) {
  */
 function resolveRequestOptionsInit(options: UmiRequestOptions, configuration: GlobalHttpClientConfiguration = {}) {
   const requestConfiguration = Object.assign({}, DEFAULT_APP_REQUEST_CONFIGURATION, configuration);
-  const {upload, download} = options;
+  const { upload, download } = options;
 
   const requestOptionsInit: RequestOptionsInit = options;
 

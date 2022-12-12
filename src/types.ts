@@ -1,101 +1,7 @@
 import { JSONPathOptions } from 'jsonpath-plus';
+import { TokenOptions } from './token';
 
 type RequestMethodType = 'get' | 'post' | 'put' | 'delete' | 'options' | string;
-
-/**
- * 令牌配置
- */
-export interface TokenConfiguration<V> {
-  access_token: V;
-  refresh_token?: V;
-  id_token?: V;
-}
-
-/**
- * 令牌类型
- * @see https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05
- */
-export type TokenType = keyof TokenConfiguration<any>;
-
-/**
- * 令牌存储类型
- * <p>目前仅支持 localStorage 和 sessionStorage ，后期可继续扩展</p>
- */
-export type StorageType = 'local' | 'session';
-
-/**
- * 令牌存储的 key 配置
- */
-export type TokenStorageKey = string | TokenConfiguration<string>;
-
-export const TOKEN_STORAGE_KEY: TokenConfiguration<string> = {
-  access_token: 'Authorization',
-  refresh_token: 'refresh_token',
-  id_token: 'id_token',
-};
-
-/**
- * 令牌参数名称
- */
-export type TokenParamKey = TokenConfiguration<string>;
-
-export const TOKEN_PARAM_KEY: TokenConfiguration<string> = {
-  access_token: 'Authorization',
-  refresh_token: 'refresh_token',
-  id_token: 'id_token',
-};
-
-/**
- * 令牌存储类型配置
- */
-export type TokenStorage = StorageType | TokenConfiguration<StorageType>;
-
-export const TOKEN_STORAGE: TokenConfiguration<StorageType> = {
-  access_token: 'local',
-  id_token: 'local',
-  refresh_token: 'local',
-};
-
-export interface TokenOptions {
-  /**
-   * 多令牌支持
-   */
-  multiSupport?: boolean;
-
-  /**
-   * 令牌存储位置
-   */
-  storage?: TokenStorage;
-
-  /**
-   * 令牌存储在 Storage 的 Key 值
-   */
-  storageKey?: TokenStorageKey;
-
-  /**
-   * 访问令牌前缀
-   * @deprecated use accessTokenType instead
-   */
-  prefix?: string;
-
-  /**
-   * 是否 bearer token
-   * @default false
-   * @deprecated use accessTokenType instead
-   */
-  bearer?: boolean;
-
-  /**
-   * 访问令牌类型
-   */
-  accessTokenType?: 'Bearer' | string;
-
-  /**
-   * 令牌请求参数 key
-   */
-  paramKey?: TokenParamKey;
-}
-
 /**
  * 数据格式化
  * @see https://www.npmjs.com/package/jsonpath-plus
@@ -190,7 +96,7 @@ export interface HttpClientCommonOptions {
   prefix?: string | Record<string, string>;
 
   /**
-   * 微服务配置（ { @{code <名称>}:<前缀> }）
+   * 微服务配置（ <服务别名>:<前缀> ）
    */
   microService?: MicroServiceConfiguration & { [key: string]: string };
 
@@ -259,15 +165,15 @@ export interface HttpClientOptions extends HttpClientCommonOptions {
 
   /**
    * @description 微服务前缀
-   * @deprecated use micro instead
+   * @deprecated use microAlias instead
    */
   microPrefix?: string | string[];
 
   /**
-   * @description 微服务配置的 key
+   * @description 微服务别名（配置的 key）
    * @since 0.3.0
    */
-  micro?: keyof MicroServiceConfiguration | string;
+  microAlias?: keyof MicroServiceConfiguration | string;
 
   /**
    * @description 请求方法
@@ -313,6 +219,8 @@ export interface HttpClient {
   <R = any>(url: string, options: HttpClientOptions): Promise<R>;
 }
 
+export type UrlRewriteFn = (url: string, proxy: boolean, microPrefix: string | string[]) => string;
+
 /**
  * 全局配置
  */
@@ -325,11 +233,12 @@ export interface GlobalHttpClientConfiguration extends HttpClientCommonOptions {
 
   /**
    * 重写 url 地址
-   * @param url
+   * @param url 以 /api开头的接口地址
    * @param proxy 接口是否代理到本地
-   * @param micro 微服务前缀
+   * @param microPrefix 微服务前缀
+   * @param defaultRewrite 默认 url 重写函数
    */
-  rewrite?: (url: string, proxy: boolean, micro?: string | string[]) => string;
+  rewrite?: (url: string, proxy: boolean, microPrefix: string | string[], defaultRewrite?: UrlRewriteFn) => string;
 
   /**
    * 服务端业务错误映射

@@ -1,14 +1,7 @@
-import {
-  Env,
-  FiledInfo,
-  GlobalHttpClientConfiguration,
-  HTTP_CLIENT_KEYS,
-  MicroServiceConfiguration,
-  TokenOptions,
-} from '../types';
+import {Env, FiledInfo, GlobalHttpClientConfiguration, HTTP_CLIENT_KEYS, MicroServiceConfiguration} from '../types';
 import {RequestOptionsInit} from 'umi-request';
 import {UmiRequestOptions} from './index';
-import {deprecated, getToken, getTokenParamKey} from '../util';
+import {deprecated, getToken, getTokenParamKey} from '../utils';
 import {
   ForbiddenError,
   InterfaceError,
@@ -18,6 +11,7 @@ import {
   UnauthorizedError,
 } from './error';
 import {merge, omit} from 'lodash-es';
+import {TokenOptions} from '../token';
 
 /**
  * 根据配置生成实际 url
@@ -26,19 +20,19 @@ import {merge, omit} from 'lodash-es';
  * @param conf
  */
 function finalUrl(urlPath: string, opts: UmiRequestOptions, conf: GlobalHttpClientConfiguration): string {
-  const { proxy, rewrite } = conf;
-  const { micro } = opts;
+  const { proxy, rewrite, microService: ms1 = {} } = conf;
+  const { microAlias, microService: ms2 = {} } = opts;
 
   /* 废弃属性 */
   // ------------------------------------------------------- todo remove in next
-  deprecated(opts.microPrefix, micro, opts);
+  deprecated(opts, 'microPrefix', 'microAlias', 'UmiRequestOptions');
   let microPrefix: string | string[] = opts.microPrefix;
   // -------------------------------------------------------
 
   /* 微服务前缀获取 */
-  if (micro) {
-    const microService: MicroServiceConfiguration = merge(conf?.microService, opts?.microService);
-    microPrefix = microService[micro];
+  if (microAlias) {
+    const microService: MicroServiceConfiguration = merge(ms1, ms2);
+    microPrefix = microService[microAlias];
   }
 
   if (rewrite) {

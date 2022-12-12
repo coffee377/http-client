@@ -12,11 +12,12 @@
 
 你可以借助 script 标签直接通过 CDN 来使用 http-client，在 HTML 页面的 <head> 中包含以下代码行
 
+- https://unpkg.com/@jqsoft/http-client@0.3.0/dist/umd/http-client.min.js
+- https://cdn.jsdelivr.net/npm/@jqsoft/http-client@0.3.0/dist/umd/http-client.min.js
+
 ```js
 <script src="https://unpkg.com/@jqsoft/http-client@0.3.0/dist/umd/http-client.min.js"/>
 ```
-
-### 通过包管理工具
 
 - Using pnpm, run the following on a command line:
 
