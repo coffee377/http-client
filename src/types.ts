@@ -1,7 +1,18 @@
 import { JSONPathOptions } from 'jsonpath-plus';
 import { TokenOptions } from './token';
 
-type RequestMethodType = 'get' | 'post' | 'put' | 'delete' | 'options' | string;
+type HttpMethod =
+  | 'get'
+  | 'GET'
+  | 'post'
+  | 'POST'
+  | 'put'
+  | 'PUT'
+  | 'delete'
+  | 'DELETE'
+  | 'options'
+  | 'OPTIONS'
+  | string;
 /**
  * 数据格式化
  * @see https://www.npmjs.com/package/jsonpath-plus
@@ -75,30 +86,20 @@ export interface FiledInfo {
 
 export type Env = 'dev' | 'test' | 'prod' | 'mock' | string;
 
+export type UrlRewrite<Context extends Omit<HttpClientOptions, 'rewrite'>> = (
+  url: string,
+  context: Context,
+  defaultRewrite?: UrlRewrite<Context>,
+) => string;
+
 /**
  * 通用配置选项
  */
-export interface HttpClientCommonOptions {
+export interface HttpClientCommonOptions<C = any> {
   /**
-   * 请求类库
+   * 重写 url 地址
    */
-  factory?: 'umi-request' | 'axios';
-
-  /**
-   * 环境名称
-   * @since 0.3.0
-   */
-  env?: Env;
-
-  /**
-   * 接口请求（或指定环境）前缀
-   */
-  prefix?: string | Record<string, string>;
-
-  /**
-   * 微服务配置（ <服务别名>:<前缀> ）
-   */
-  microService?: MicroServiceConfiguration & { [key: string]: string };
+  rewrite?: UrlRewrite<C>;
 
   /**
    * 请求头配置
@@ -119,6 +120,11 @@ export interface HttpClientCommonOptions {
    * 响应实体相关字段配置
    */
   filedInfo?: FiledInfo;
+
+  /**
+   * 服务端错误映射
+   */
+  errorMapping?: Record<string | number, string>;
 }
 
 export const COMMON_KEYS = [
@@ -157,11 +163,29 @@ export interface MicroServiceConfiguration {
   oneself?: string;
 }
 
-export interface HttpClientOptions extends HttpClientCommonOptions {
+export interface PrefixOptions {
   /**
-   * @description 请求接口地址
+   * 环境名称
+   * @since 0.3.0
    */
-  url?: string;
+  env?: Env;
+
+  /**
+   * 接口请求（或指定环境）前缀
+   */
+  prefix?: string | Record<string, string>;
+
+  /**
+   * 是否使用模拟数据
+   */
+  mock?: boolean;
+}
+
+export interface MicroOptions {
+  /**
+   * 微服务配置（ <服务别名>:<前缀> ）
+   */
+  microService?: MicroServiceConfiguration & { [key: string]: string };
 
   /**
    * @description 微服务前缀
@@ -174,13 +198,20 @@ export interface HttpClientOptions extends HttpClientCommonOptions {
    * @since 0.3.0
    */
   microAlias?: keyof MicroServiceConfiguration | string;
+}
 
-  /**
-   * @description 请求方法
-   * @default GET
-   */
-  method?: RequestMethodType;
+export type PathValue = string | number | boolean;
 
+export interface aa {
+  a: string;
+  b: number;
+  c: boolean;
+}
+
+/**
+ * 简化参数
+ */
+export interface SimplifyOptions {
   /**
    * @description 是否文件上传(requestType = 'form')
    * @default false
@@ -194,54 +225,56 @@ export interface HttpClientOptions extends HttpClientCommonOptions {
    * @default false
    */
   download?: boolean;
+  /**
+   * url 占位参数
+   * 自动替换 {path} 相关占位参数
+   */
+  paths?: PathValue | Record<string, PathValue>;
+}
+
+export interface HttpClientOptions
+  extends PrefixOptions,
+    MicroOptions,
+    SimplifyOptions,
+    HttpClientCommonOptions<HttpClientOptions> {
+  /**
+   * 请求类库
+   */
+  factory?: 'umi-request' | 'axios';
 
   /**
-   * 是否使用模拟数据
+   * @description 请求接口地址
    */
-  mock?: boolean;
+  url?: string;
 
-  [key: string]: any;
+  /**
+   * @description 请求方法
+   * @default GET
+   */
+  method?: HttpMethod;
+
+  /**
+   * GET 请求参数
+   */
+  // params?: URLSearchParams;
+
+  /**
+   * PUT POST 等请求体数据
+   */
+  // data?: any;
+
+  // [key: string]: any;
 }
 
 export const HTTP_CLIENT_KEYS = ['url', 'microPrefix', 'micro', 'upload', 'download', 'mock', ...COMMON_KEYS];
 
-export interface HttpClient {
-  get: HttpClient;
-  post: HttpClient;
-  put: HttpClient;
-  delete: HttpClient;
-  options: HttpClient;
-
-  <R = any>(url: string): Promise<R>;
-
-  <R = any>(service: HttpClientOptions): Promise<R>;
-
-  <R = any>(url: string, options: HttpClientOptions): Promise<R>;
-}
-
-export type UrlRewriteFn = (url: string, proxy: boolean, microPrefix: string | string[]) => string;
-
 /**
  * 全局配置
  */
-export interface GlobalHttpClientConfiguration extends HttpClientCommonOptions {
+export interface GlobalHttpClientConfiguration extends HttpClientOptions {
   /**
    * @description 接口是否代理到本地，配合接口代理(如 nginx)进行处理
    * @default false
    */
   proxy?: boolean;
-
-  /**
-   * 重写 url 地址
-   * @param url 以 /api开头的接口地址
-   * @param proxy 接口是否代理到本地
-   * @param microPrefix 微服务前缀
-   * @param defaultRewrite 默认 url 重写函数
-   */
-  rewrite?: (url: string, proxy: boolean, microPrefix: string | string[], defaultRewrite?: UrlRewriteFn) => string;
-
-  /**
-   * 服务端业务错误映射
-   */
-  errorMapping?: Record<string | number, string>;
 }

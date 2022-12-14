@@ -1,4 +1,4 @@
-import { HttpClientOptions } from './types';
+import { HttpClientOptions, PathValue } from './types';
 import { TOKEN_PARAM_KEY, TOKEN_STORAGE_KEY, TokenOptions, TokenParamKey, TokenStorageKey, TokenType } from './token';
 import { merge } from 'lodash-es';
 
@@ -128,10 +128,11 @@ export function urlPathJoin(path?: string | string[]) {
 
 /**
  * 微服务前缀 url
+ * @param prefix 前缀正则表达式
  * @param url 原始 url
  * @param micro 微服务
  */
-export function trimApiPrefixUrl(url: string, micro?: string | string[]) {
+export function trimPrefixUrl(prefix: RegExp, url: string, micro?: string | string[]) {
   const arr: string[] = [];
   /* 微服务前缀 */
   if (typeof micro === 'string') {
@@ -140,30 +141,77 @@ export function trimApiPrefixUrl(url: string, micro?: string | string[]) {
     arr.push(...micro);
   }
   /* url 去除默认 /api 前缀 */
-  const trimUrl = url.replace(/^\/api\/?(.*)/, '$1');
+  const trimUrl = url.replace(prefix, '$1');
   arr.push(trimUrl);
   return urlPathJoin(arr);
 }
 
-export function transformParams(url: string): HttpClientOptions;
-export function transformParams(opts: HttpClientOptions): HttpClientOptions;
-export function transformParams(url: string, opts: HttpClientOptions): HttpClientOptions;
+/**
+ * 微服务前缀 url
+ * @param url 原始 url
+ * @param micro 微服务
+ */
+export function trimApiPrefixUrl(url: string, micro?: string | string[]) {
+  return trimPrefixUrl(/^\/api\/?(.*)/, url, micro);
+}
+
+/**
+ * 占位参数替换
+ * @param url url 地址
+ * @param paths 占位参数
+ */
+export function replacePlaceholderParameters(url: string, paths: PathValue | Record<string, PathValue> = {}) {
+  let pathsKV: Record<string, PathValue> = {};
+  const pathsKey = url.match(/(?<=\/?{)(.*?)(?=}\/?)/g) ?? [];
+  if (typeof paths === 'object') {
+    pathsKV = paths;
+  } else if (pathsKey.length === 1) {
+    pathsKV[pathsKey[0]] = paths;
+  }
+
+  for (let key of pathsKey) {
+    if (!Reflect.has(pathsKV, key)) {
+      // console.error(`路径参数错误，缺失参数 ${key}`);
+      throw new Error(`路径参数错误，缺失参数 ${key}`);
+    } else {
+      url = url.replace(new RegExp(`{${key}}`), pathsKV[key].toString());
+    }
+  }
+  return url;
+}
+
+// export function transformHttpClientOptions(url: string): HttpClientOptions;
+// export function transformHttpClientOptions(opts: HttpClientOptions): HttpClientOptions;
+// export function transformHttpClientOptions(url: string, opts: HttpClientOptions): HttpClientOptions;
 /**
  * 参数转换
- * @param service
+ * @param urlOrOptions
  * @param options
  */
-export function transformParams(
-  service: string | HttpClientOptions,
+// export function transformHttpClientOptions(
+//   urlOrOptions: string | HttpClientOptions,
+//   options: HttpClientOptions = {},
+// ): HttpClientOptions {
+//   let opts: HttpClientOptions = {};
+//   if (arguments.length === 1 && typeof urlOrOptions === 'string') {
+//     opts.url = urlOrOptions;
+//   } else if (arguments.length === 1 && typeof urlOrOptions !== 'string') {
+//     opts = urlOrOptions;
+//   } else {
+//     opts = merge(options, { url: urlOrOptions });
+//   }
+//   return opts;
+// }
+
+export const transformHttpClientOptions = (
+  urlOrOptions: string | HttpClientOptions,
   options: HttpClientOptions = {},
-): HttpClientOptions {
-  let opts: HttpClientOptions = {};
-  if (arguments.length === 1 && typeof service === 'string') {
-    opts.url = service;
-  } else if (arguments.length === 1 && typeof service !== 'string') {
-    opts = service;
+) => {
+  if (typeof urlOrOptions === 'string') {
+    options = options || {};
+    options.url = urlOrOptions;
   } else {
-    opts = merge(options, { url: service });
+    options = urlOrOptions || {};
   }
-  return opts;
-}
+  return options;
+};

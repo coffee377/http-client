@@ -13,6 +13,19 @@ export default defineConfig({
   },
   umd: {
     entry: 'src/index', // 默认构建入口文件
+    name: 'request',
+    chainWebpack: (memo, { env, webpack }) => {
+      memo.output.libraryExport('default');
+      // memo.plugins
+      memo.optimization.minimize(false);
+      // console.log(memo);
+      return memo;
+    },
+    // platform: 'browser',
+    externals: {
+      // axios: 'axios',
+    },
+    sourcemap: true,
   },
   prebundle: {},
 } as IFatherConfig);

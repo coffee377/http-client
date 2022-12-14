@@ -1,31 +1,78 @@
-import { expect, test } from '@jest/globals';
-import { GlobalHttpClientConfiguration } from '../types';
-import { DEFAULT_APP_REQUEST_CONFIGURATION } from '../window';
+import { describe, expect, test } from '@jest/globals';
+import { GlobalHttpClientConfiguration, HttpClientOptions } from '../types';
+import { DEFAULT_HTTP_CLIENT_CONFIGURATION } from '../window';
 import { merge } from 'lodash-es';
 
-test('GlobalHttpClientConfiguration', () => {
-  const def: GlobalHttpClientConfiguration = DEFAULT_APP_REQUEST_CONFIGURATION;
-  const newConfig: GlobalHttpClientConfiguration = {
-    filedInfo: {
-      result: {
-        success: 'succeed',
-        message: 'msg',
+describe('GlobalHttpClientConfiguration', () => {
+  test('config', () => {
+    const def: GlobalHttpClientConfiguration = DEFAULT_HTTP_CLIENT_CONFIGURATION;
+    const newConfig: GlobalHttpClientConfiguration = {
+      filedInfo: {
+        result: {
+          success: 'succeed',
+          message: 'msg',
+        },
       },
-    },
-  };
-  const result: GlobalHttpClientConfiguration = merge(def, newConfig);
+    };
+    const result: GlobalHttpClientConfiguration = merge(def, newConfig);
 
-  const { rewrite } = def;
+    expect(result.filedInfo.result.success === 'succeed').toBeTruthy();
+    expect(result.filedInfo.result.code === 'code').toBeTruthy();
+    expect(result.filedInfo.result.message === 'msg').toBeTruthy();
+    expect(result.filedInfo.result.data === 'data').toBeTruthy();
+  });
+});
 
-  if (rewrite) {
-    const proxyResult = rewrite('/api/login', true, 'auth');
-    expect(proxyResult).toBe('/auth/login');
-    const result = rewrite('/api/login', false, 'auth');
-    expect(result).toBe('/auth/login');
-  }
+describe('url rewrite', () => {
+  test('without path parma', () => {
+    const { rewrite } = DEFAULT_HTTP_CLIENT_CONFIGURATION;
 
-  expect(result.filedInfo.result.success === 'succeed').toBeTruthy();
-  expect(result.filedInfo.result.code === 'code').toBeTruthy();
-  expect(result.filedInfo.result.message === 'msg').toBeTruthy();
-  expect(result.filedInfo.result.data === 'data').toBeTruthy();
+    const result = rewrite<HttpClientOptions>('/api/login', {
+      microService: { auth: '/aaa' },
+      microAlias: 'auth',
+    });
+    expect(result).toBe('/aaa/login');
+  });
+
+  test('with one path parma', () => {
+    const { rewrite } = DEFAULT_HTTP_CLIENT_CONFIGURATION;
+
+    const result = rewrite<HttpClientOptions>('/api/{login}', {
+      microService: { auth: '/aaa' },
+      microAlias: 'auth',
+      paths: 'oauth2_login',
+    });
+    expect(result).toBe('/aaa/oauth2_login');
+  });
+
+  test('with more path parma', () => {
+    const { rewrite } = DEFAULT_HTTP_CLIENT_CONFIGURATION;
+
+    const result = rewrite<HttpClientOptions>('/api/{a}/{b}/{c}/test', {
+      microService: { auth: '/aaa' },
+      microAlias: 'auth',
+      paths: {
+        a: '1',
+        b: 2,
+        c: false,
+      },
+    });
+    expect(result).toBe('/aaa/1/2/false/test');
+  });
+
+  test('not exist path parma', () => {
+    const { rewrite } = DEFAULT_HTTP_CLIENT_CONFIGURATION;
+
+    const result = () => {
+      rewrite<HttpClientOptions>('/api/{a}/{b}/{c}/test', {
+        microService: { auth: '/aaa' },
+        microAlias: 'auth',
+        paths: {
+          a: '1',
+          b: 2,
+        },
+      });
+    };
+    expect(result).toThrow();
+  });
 });

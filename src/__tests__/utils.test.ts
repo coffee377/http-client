@@ -6,7 +6,7 @@ import {
   getTokenParamKey,
   slash,
   slashTrim,
-  transformParams,
+  transformHttpClientOptions,
   trimApiPrefixUrl,
   urlPathJoin,
 } from '../utils';
@@ -83,28 +83,28 @@ test('trim api prefix url', () => {
   expect(trimApiPrefixUrl('/api/a', ['b', 'c'])).toBe('/b/c/a');
 });
 
-describe('transform params', () => {
+describe('transform http client options', () => {
   test('url', () => {
-    const opts1 = transformParams('/api/auth/login');
+    const opts1 = transformHttpClientOptions('/api/auth/login');
     expect(opts1).toBeDefined();
     expect(Object.keys(opts1).length).toBe(1);
     expect(opts1.url).toBe('/api/auth/login');
   });
 
   test('opts', () => {
-    const opts2 = transformParams({ url: '/a/b/c', method: 'post', micro: 'auth' });
+    const opts2 = transformHttpClientOptions({ url: '/a/b/c', method: 'post', microAlias: 'auth' });
     expect(opts2).toBeDefined();
     expect(Object.keys(opts2).length).toBe(3);
     expect(opts2.url).toBe('/a/b/c');
     expect(opts2.method).toBe('post');
-    expect(opts2.micro).toBe('auth');
+    expect(opts2.microAlias).toBe('auth');
   });
   test('url & opts', () => {
-    const opts3 = transformParams('/api/a/b/c', { url: '/a/b/c', method: 'post', micro: 'auth' });
+    const opts3 = transformHttpClientOptions('/api/a/b/c', { url: '/a/b/c', method: 'post', microAlias: 'auth' });
     expect(opts3).toBeDefined();
     expect(Object.keys(opts3).length).toBe(3);
     expect(opts3.url).toBe('/api/a/b/c');
     expect(opts3.method).toBe('post');
-    expect(opts3.micro).toBe('auth');
+    expect(opts3.microAlias).toBe('auth');
   });
 });

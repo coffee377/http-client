@@ -1,7 +1,7 @@
-import {Env, FiledInfo, GlobalHttpClientConfiguration, HTTP_CLIENT_KEYS, MicroServiceConfiguration} from '../types';
+import {Env, FiledInfo, GlobalHttpClientConfiguration, HTTP_CLIENT_KEYS} from '../types';
 import {RequestOptionsInit} from 'umi-request';
 import {UmiRequestOptions} from './index';
-import {deprecated, getToken, getTokenParamKey} from '../utils';
+import {getToken, getTokenParamKey} from '../utils';
 import {
   ForbiddenError,
   InterfaceError,
@@ -25,20 +25,21 @@ function finalUrl(urlPath: string, opts: UmiRequestOptions, conf: GlobalHttpClie
 
   /* 废弃属性 */
   // ------------------------------------------------------- todo remove in next
-  deprecated(opts, 'microPrefix', 'microAlias', 'UmiRequestOptions');
-  let microPrefix: string | string[] = opts.microPrefix;
-  // -------------------------------------------------------
-
-  /* 微服务前缀获取 */
-  if (microAlias) {
-    const microService: MicroServiceConfiguration = merge(ms1, ms2);
-    microPrefix = microService[microAlias];
-  }
-
-  if (rewrite) {
-    return rewrite(urlPath, proxy, microPrefix);
-  }
-  return urlPath;
+  // deprecated(opts, 'microPrefix', 'microAlias', 'UmiRequestOptions');
+  // let microPrefix: string | string[] = opts.microPrefix;
+  // // -------------------------------------------------------
+  //
+  // /* 微服务前缀获取 */
+  // if (microAlias) {
+  //   const microService: MicroServiceConfiguration = merge(ms1, ms2);
+  //   microPrefix = microService[microAlias];
+  // }
+  //
+  // if (rewrite) {
+  //   return rewrite(urlPath, proxy, microPrefix);
+  // }
+  // return urlPath;
+  return null;
 }
 
 /**
