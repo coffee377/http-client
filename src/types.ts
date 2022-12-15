@@ -84,22 +84,22 @@ export interface FiledInfo {
   page?: PageFieldInfo;
 }
 
-export type Env = 'dev' | 'test' | 'prod' | 'mock' | string;
+export type Env = 'default' | 'dev' | 'test' | 'prod' | 'mock' | string;
 
-export type UrlRewrite<Context extends Omit<HttpClientOptions, 'rewrite'>> = (
+export type UrlRewrite<Context extends HttpClientOptions> = (
   url: string,
   context: Context,
-  defaultRewrite?: UrlRewrite<Context>,
+  defaultRewrite?: UrlRewrite<Omit<Context, 'rewrite'>>,
 ) => string;
 
 /**
  * 通用配置选项
  */
 export interface HttpClientCommonOptions<C = any> {
-  /**
-   * 重写 url 地址
-   */
-  rewrite?: UrlRewrite<C>;
+  // /**
+  //  * 重写 url 地址
+  //  */
+  // rewrite?: UrlRewrite<C>;
 
   /**
    * 请求头配置
@@ -174,24 +174,19 @@ export interface PrefixOptions {
    * 接口请求（或指定环境）前缀
    */
   prefix?: string | Record<string, string>;
-
-  /**
-   * 是否使用模拟数据
-   */
-  mock?: boolean;
 }
 
-export interface MicroOptions {
-  /**
-   * 微服务配置（ <服务别名>:<前缀> ）
-   */
-  microService?: MicroServiceConfiguration & { [key: string]: string };
-
+interface MicroOptions {
   /**
    * @description 微服务前缀
    * @deprecated use microAlias instead
    */
   microPrefix?: string | string[];
+
+  /**
+   * 微服务配置（ <服务别名>:<前缀> ）
+   */
+  microService?: MicroServiceConfiguration & { [key: string]: string };
 
   /**
    * @description 微服务别名（配置的 key）
@@ -200,18 +195,25 @@ export interface MicroOptions {
   microAlias?: keyof MicroServiceConfiguration | string;
 }
 
-export type PathValue = string | number | boolean;
-
-export interface aa {
-  a: string;
-  b: number;
-  c: boolean;
+export interface UriOptions extends MicroOptions {
+  /**
+   * url 占位参数
+   * 自动替换 {path} 相关占位参数
+   */
+  paths?: PathValue | Record<string, PathValue>;
 }
+
+export type PathValue = string | number | boolean;
 
 /**
  * 简化参数
  */
 export interface SimplifyOptions {
+  /**
+   * 是否使用模拟数据
+   */
+  mock?: boolean;
+
   /**
    * @description 是否文件上传(requestType = 'form')
    * @default false
@@ -225,16 +227,11 @@ export interface SimplifyOptions {
    * @default false
    */
   download?: boolean;
-  /**
-   * url 占位参数
-   * 自动替换 {path} 相关占位参数
-   */
-  paths?: PathValue | Record<string, PathValue>;
 }
 
 export interface HttpClientOptions
   extends PrefixOptions,
-    MicroOptions,
+    UriOptions,
     SimplifyOptions,
     HttpClientCommonOptions<HttpClientOptions> {
   /**

@@ -15,8 +15,8 @@ export declare interface Window {
  * @param url url 地址
  * @param context 配置上下文
  */
-export const defaultRewriteFn: UrlRewrite<Omit<HttpClientOptions, 'rewrite'>> = (url, context) => {
-  const { microService = {}, microAlias } = context;
+export const defaultRewriteFn: UrlRewrite<HttpClientOptions> = (url, context) => {
+  const {rewrite, microService = {}, microAlias} = context;
   // ------------------------------------------------------- todo remove in next
   deprecated(context, 'microPrefix', 'microAlias', 'HttpClientOptions');
   let microPrefix: string | string[] = context.microPrefix;
@@ -37,12 +37,12 @@ export const defaultRewriteFn: UrlRewrite<Omit<HttpClientOptions, 'rewrite'>> = 
 };
 
 export const DEFAULT_HTTP_CLIENT_CONFIGURATION: GlobalHttpClientConfiguration = {
-  env: 'dev',
+  env: 'default',
   factory: 'umi-request',
-  rewrite: (url, context, defaultRewrite) => {
-    /* 默认 url 重写规则 => 去除 /api 前缀,并替换占位参数 */
-    return defaultRewrite ? defaultRewrite(url, context) : url;
-  },
+  // rewrite: (url, context, defaultRewrite) => {
+  //   /* 默认 url 重写规则 => 去除 /api 前缀,并替换占位参数 */
+  //   return defaultRewrite ? defaultRewrite(url, context) : url;
+  // },
   resultFormat: '$.data',
   filedInfo: {
     result: {

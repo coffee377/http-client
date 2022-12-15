@@ -43,6 +43,7 @@
   "dependencies": {
     "jsonpath-plus": "^7.2.0",
     "lodash-es": "^4.17.21",
+    "tapable": "^2.2.1",
     "umi-request": "^1.4.0"
   },
   "peerDependencies": {

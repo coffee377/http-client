@@ -75,10 +75,10 @@ function isFormData(data: any) {
  * @since 0.2.5
  */
 function resolveRequestOptionsInit(options: UmiRequestOptions, configuration: GlobalHttpClientConfiguration = {}) {
-    const requestConfiguration = Object.assign({}, DEFAULT_HTTP_CLIENT_CONFIGURATION, configuration);
-    const { upload, download } = options;
+  const requestConfiguration = Object.assign({}, DEFAULT_HTTP_CLIENT_CONFIGURATION, configuration);
+  const { upload, download } = options;
 
-    const requestOptionsInit: RequestOptionsInit = options;
+  const requestOptionsInit: RequestOptionsInit = options;
 
   // 数据为 FormData 类型，删除 请求头中的 Content-Type，让浏览器自动处理
   if (isFormData(requestOptionsInit.data)) {
@@ -128,8 +128,8 @@ class RequestPlus implements IRequest {
   constructor(options: UmiRequestOptions = {}, configuration: GlobalHttpClientConfiguration = {}) {
       this.opts = options;
       this.conf = Object.assign({}, DEFAULT_HTTP_CLIENT_CONFIGURATION, configuration);
-      const { requestOptionsInit } = resolveRequestOptionsInit(this.opts, this.conf);
-    this.req = UmiRequestExtend(requestOptionsInit);
+      const {requestOptionsInit} = resolveRequestOptionsInit(this.opts, this.conf);
+      this.req = UmiRequestExtend(requestOptionsInit);
   }
 
   async request<R = any>(options: UmiRequestOptions): Promise<R> {
@@ -206,16 +206,16 @@ export function extend(opts: UmiRequestOptions = {}, conf: GlobalHttpClientConfi
   function plus<R>(options: UmiRequestOptions): Promise<R>;
   function plus<R>(url: string, options: UmiRequestOptions): Promise<R>;
   function plus<R = any>(service: string | UmiRequestOptions, options: UmiRequestOptions = {}): Promise<R> {
-      const requestOptions = transformHttpClientOptions(service, options);
-      return requestPlus.request<R>(requestOptions);
+    const requestOptions = transformHttpClientOptions(service, options);
+    return requestPlus.request<R>(requestOptions);
   }
 
   /* 请求语法糖  request.get request.post …… */
   const METHODS = ['get', 'post', 'put', 'delete', 'options'];
   METHODS.forEach((method) => {
     plus[method] = <R = any>(service: string | UmiRequestOptions, options: UmiRequestOptions = {}) => {
-        const requestOptions = transformHttpClientOptions(service, options);
-        return requestPlus.request<R>({ ...requestOptions, method });
+      const requestOptions = transformHttpClientOptions(service, options);
+      return requestPlus.request<R>({ ...requestOptions, method });
     };
   });
 

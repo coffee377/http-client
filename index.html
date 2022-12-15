@@ -1,26 +1,29 @@
 <!DOCTYPE html>
 <html lang="zh">
 <head>
-  <meta charset="UTF-8"/>
-  <title>Http Client</title>
-  <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport"/>
-  <script>
-    window.__HTTP_CLIENT_CONFIG__ = {
-      env: 'prod',
-    }
-  </script>
-  <script src="../dist/umd/http-client.min.js"></script>
-  <script src="https://unpkg.com/axios@1.1.2/dist/axios.min.js"></script>
+    <meta charset="UTF-8"/>
+    <title>Http Client</title>
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport"/>
+    <script>
+        window.__HTTP_CLIENT_CONFIG__ = {
+            // env: 'test',
+            prefix: {
+                dev: '/dev',
+                test: '/test',
+                prod: '/prod',
+                mock: '/mock'
+            },
+        };
+    </script>
+    <script src="../dist/umd/http-client.min.js"></script>
+    <script src="https://unpkg.com/axios@1.1.2/dist/axios.min.js"></script>
 </head>
 <body>
 <script>
-
-  console.log(request.version);
-  request.get('/api/a/b/c');
-  request.post('/api/{a}/{b}/c', {paths: {a: 1, b: 2}});
-  request.put('/api/{a}/{b}/{c}/222', {paths: {a: 1, b: 2}});
-
-
+    console.log(request.version);
+    // request.get('/api/a/b/c');
+    request.post('/api/{a}/{b}/c', {paths: {a: 1, b: 2}, microAlias: 'auth', prefix: '/real', env: '', mock: false});
+    // request.put('/api/{a}/{b}/{c}/222', {paths: {a: 1, b: 2}});
 </script>
 </body>
 </html>
