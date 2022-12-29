@@ -26,7 +26,7 @@ class HttpClientStatic {
   static get<R = any>(url: string): Promise<R>;
   static get<R = any>(opts: HttpClientOptions): Promise<R>;
   static get<R = any>(url: string, opts: HttpClientOptions): Promise<R>;
-  static get<R = any>(url: string | HttpClientOptions, opts: HttpClientOptions): Promise<R> {
+  static get<R = any>(url: string | HttpClientOptions, opts?: HttpClientOptions): Promise<R> {
     return this.client.get(url as any, opts);
   }
 
@@ -59,6 +59,6 @@ class HttpClientStatic {
   }
 }
 
-const request = HttpClientStatic;
+const http = HttpClientStatic;
 
-export default request;
+export default http;

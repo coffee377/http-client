@@ -7,9 +7,10 @@
   "browser": "dist/umd/http-client.min.js",
   "unpkg": "dist/umd/http-client.min.js",
   "scripts": {
-    "dev": "father dev",
+    "dev": "vite",
     "test": "jest",
-    "build": "father build",
+    "clean": "shx rm -rf coverage dist",
+    "build": "pnpm clean && father build",
     "build:deps": "father prebundle",
     "prepublishOnly": "father doctor && npm run build"
   },

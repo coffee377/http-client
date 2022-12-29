@@ -1,4 +1,5 @@
 node_modules
+compiled
 dist
 .DS_Store
 .idea

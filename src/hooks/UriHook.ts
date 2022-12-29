@@ -1,18 +1,29 @@
 import { UriOptions } from '../types';
-import { SyncWaterfallHook } from 'tapable';
+import { AsArray, AsyncSeriesWaterfallHook } from 'tapable';
 import { deprecated, replacePlaceholderParameters, urlPathJoin } from '../utils';
+import { UriPlugin } from './const';
 
-class UriHook extends SyncWaterfallHook<[string, UriOptions], UriOptions> {
-  constructor(name?: string) {
-    super(['url', 'options'] as any, name);
+interface UriPlugin {
+  name: string;
+  type?: '';
+  stage?: number;
+  before?: string;
+  fn: (url: string, opts: UriOptions) => string | Promise<string>;
+}
+
+// export type UriPlugin = (url: string, opts: UriOptions) => string | Promise<string>;
+
+class UriHook extends AsyncSeriesWaterfallHook<[string, UriOptions]> {
+  constructor(name: string = 'UriHook') {
+    super(['url', 'options'] as AsArray<any>, name);
 
     /* 去除 ”/api“ 前缀 */
-    this.tap({ name: 'api', stage: -10000 }, (url, opts) => {
+    this.tap({ name: 'api', stage: UriPlugin.API }, (url = '', opts) => {
       return url.replace(/^\/api\/?(.*)/, '/$1');
     });
 
     /* 微服务前缀 */
-    this.tap({ name: 'micro' }, (url, opts) => {
+    this.tap({ name: 'micro', stage: UriPlugin.MICRO }, (url, opts) => {
       // ------------------------------------------------------- todo remove in next
       deprecated(opts, 'microPrefix', 'microAlias', 'HttpClientOptions');
       let microPrefix: string | string[] = opts.microPrefix;
@@ -33,7 +44,7 @@ class UriHook extends SyncWaterfallHook<[string, UriOptions], UriOptions> {
     });
 
     /* 占位参数替换 */
-    this.tap({ name: 'path' }, (url, { paths }) => {
+    this.tap({ name: 'paths', stage: UriPlugin.PATHS }, (url, { paths }) => {
       return replacePlaceholderParameters(url, paths);
     });
   }

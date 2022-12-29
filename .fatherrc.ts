@@ -13,7 +13,7 @@ export default defineConfig({
   },
   umd: {
     entry: 'src/index', // 默认构建入口文件
-    name: 'request',
+    name: 'http',
     chainWebpack: (memo, { env, webpack }) => {
       memo.output.libraryExport('default');
       // memo.plugins
@@ -27,5 +27,18 @@ export default defineConfig({
     },
     sourcemap: true,
   },
-  prebundle: {},
+  prebundle: {
+    deps: {
+      'umi-request': {
+        // minify: false,
+        dts: false,
+      },
+      'jsonpath-plus': {
+        dts: false,
+      },
+      tapable: {
+        dts: false,
+      },
+    },
+  },
 } as IFatherConfig);
