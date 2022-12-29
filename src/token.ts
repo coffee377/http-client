@@ -101,14 +101,17 @@ export interface TokenOptions {
   paramKey?: TokenParamKey;
 }
 
+/**
+ * 令牌管理器
+ */
 interface TokenManager {
-  storage: TokenStorage;
-  tokenStorageKey: TokenStorageKey;
+  readonly storage: StorageType;
+  readonly storageKey: string;
 
   /**
    * 获取令牌
    */
-  getToken(): string;
+  getToken(storageType: StorageType): string;
 
   /**
    * 令牌校验

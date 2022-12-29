@@ -1,4 +1,4 @@
-import { HttpClientOptions, PathValue } from './types';
+import { HttpClientOptions, ParameterValue, PathValue } from './types';
 import { TOKEN_PARAM_KEY, TOKEN_STORAGE_KEY, TokenOptions, TokenParamKey, TokenStorageKey, TokenType } from './token';
 import { merge } from 'lodash-es';
 
@@ -215,3 +215,9 @@ export const transformHttpClientOptions = (
   }
   return options;
 };
+
+/**
+ * 参数字符串话
+ * @param value
+ */
+const parameterStringify = (value?: ParameterValue) => (value === null || value === undefined ? '' : `${value}`);

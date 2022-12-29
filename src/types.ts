@@ -1,5 +1,6 @@
 import { JSONPathOptions } from 'jsonpath-plus';
 import { TokenOptions } from './token';
+import { MicroServiceConfiguration, PrefixOptions } from './config';
 
 type HttpMethod =
   | 'get'
@@ -138,43 +139,7 @@ export const COMMON_KEYS = [
   'filedInfo',
 ];
 
-/**
- * 微服务配置
- */
-export interface MicroServiceConfiguration {
-  /**
-   * 统一认证服务
-   */
-  auth?: string;
 
-  /**
-   * 基础接口服务
-   */
-  base?: string;
-
-  /**
-   * 对象存储服务
-   */
-  oss?: string;
-
-  /**
-   * 当前系统接口服务
-   */
-  oneself?: string;
-}
-
-export interface PrefixOptions {
-  /**
-   * 环境名称
-   * @since 0.3.0
-   */
-  env?: Env;
-
-  /**
-   * 接口请求（或指定环境）前缀
-   */
-  prefix?: string | Record<string, string>;
-}
 
 interface MicroOptions {
   /**
@@ -200,10 +165,17 @@ export interface UriOptions extends MicroOptions {
    * url 占位参数
    * 自动替换 {path} 相关占位参数
    */
-  paths?: PathValue | Record<string, PathValue>;
+  paths?: ParameterValue | Record<string, ParameterValue>;
+
+  /**
+   * query 请求参数
+   */
+  params?: string | Record<string, ParameterValue> | URLSearchParams;
+
+  // params?: object | URLSearchParams;
+  paramsSerializer?: (params: Record<string, ParameterValue>) => string;
 }
 
-export type PathValue = string | number | boolean;
 
 /**
  * 简化参数
@@ -275,3 +247,42 @@ export interface GlobalHttpClientConfiguration extends HttpClientOptions {
    */
   proxy?: boolean;
 }
+
+// -------------------------------------------
+export type SafeAny = any;
+
+/*  Any Object */
+export type AnyObject = Record<string, SafeAny>;
+
+/* Any Array */
+export type AnyArray = SafeAny[];
+
+/** Represents a class `T` */
+export interface Type<T> extends Function {
+  new (...args: SafeAny[]): T;
+}
+
+/**
+ * Exclude methods from `T`
+ *
+ * ```ts
+ * Property<{ x: string, y: () => void }> -> { x: string }
+ * ```
+ */
+export type Property<T extends Record<string, any> = Record<string, any>> = Omit<
+  T,
+  { [K in keyof T]: T[K] extends Function ? K : never }[keyof T]
+>;
+
+/**
+ * Exclude properties from `T`
+ *
+ * ```ts
+ * Method<{ x: string, y: () => void }> -> { y: () => void }
+ * ```
+ */
+export type Method<T extends Record<string, any> = Record<string, any>> = Omit<T, keyof Property<T>>;
+
+export type ParameterValue = string | number | boolean;
+
+export type Nullable<T> = T | null;
