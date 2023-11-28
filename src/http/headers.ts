@@ -117,6 +117,14 @@ export class HttpHeaders {
     this.headers.forEach((value, name) => fn(this.normalizedNames.get(name)!, value));
   }
 
+  toObject(): Record<string, string> {
+    return Array.from(this.normalizedNames.keys()).reduce<Record<string, string>>((previousValue, currentValue) => {
+      const name = this.normalizedNames.get(currentValue);
+      const value = this.headers.get(currentValue).join(',');
+      return { ...previousValue, [name]: value };
+    }, {});
+  }
+
   /**
    * 实例销毁
    */

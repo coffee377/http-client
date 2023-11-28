@@ -1,5 +1,5 @@
-import type {SafeAny} from './types';
-import {HttpHeaders} from './headers';
+import type { SafeAny } from '../types';
+import { HttpHeaders } from './headers';
 
 /** Type enumeration for the different kinds of `HttpEvent`. */
 export enum HttpEventType {
@@ -21,6 +21,7 @@ export enum HttpEventType {
 export interface HttpProgressEvent {
   /** Progress event type is either upload or download. */
   type: HttpEventType.DownloadProgress | HttpEventType.UploadProgress;
+
   /** Number of bytes uploaded or downloaded. */
   loaded: number;
   /** Total number of bytes to upload or download. Depending on the request or response */
@@ -107,15 +108,15 @@ export class HttpResponse<T> extends HttpResponseBase {
   readonly body: T | null;
   override readonly type: HttpEventType.Response = HttpEventType.Response;
 
-  constructor(body?: T, options: HttpResponseOptions = {}) {
+  constructor(body?: T, options: HttpResponseOptions & { body?: T | null } = {}) {
     super(options);
     this.body = body !== undefined ? body : null;
   }
 
-  clone<D = T>(update: ConstructorParameters<typeof HttpResponse>[0] = {}): HttpResponse<D> {
-    return new HttpResponse<D>({
+  clone<D = T>(update: ConstructorParameters<typeof HttpResponse>[1] = {}): HttpResponse<D> {
+    const body = (update.body !== undefined ? update.body : this.body) as D;
+    return new HttpResponse<D>(body, {
       url: update.url || this.url || undefined,
-      body: (update.body !== undefined ? update.body : this.body) as D,
       status: update.status || this.status,
       statusText: update.statusText || this.statusText,
       headers: update.headers || this.headers,

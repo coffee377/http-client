@@ -1,6 +1,7 @@
-import { HttpClientOptions, ParameterValue, PathValue } from './types';
+import { ParameterValue } from './types';
 import { TOKEN_PARAM_KEY, TOKEN_STORAGE_KEY, TokenOptions, TokenParamKey, TokenStorageKey, TokenType } from './token';
 import { merge } from 'lodash-es';
+import { HttpClientOptions } from './config';
 
 export const DEPRECATED_MESSAGE = '{A} is deprecated, will remove in next. Please use {B} instead';
 
@@ -22,7 +23,7 @@ export const deprecatedMessage = <T = string, K extends string = string>(prop: K
  * @param instead 替换的属性
  * @param objName 配置名称
  */
-export const deprecated = <T = object, N = string, K extends string = string>(
+export const deprecated = <T extends object = object, N = string, K extends string = string>(
   obj: T,
   prop: K,
   instead: K,
@@ -44,8 +45,8 @@ export function getToken(type: TokenType = 'access_token', opts: TokenOptions = 
 
   /* 废弃属性兼容处理 */
   // ------------------------------------------------------- todo remove in next
-  deprecated('bearer', 'accessTokenType', 'TokenOptions');
-  deprecated('prefix', 'accessTokenType', 'TokenOptions');
+  deprecated(opts, 'bearer', 'accessTokenType', 'TokenOptions');
+  deprecated(opts, 'prefix', 'accessTokenType', 'TokenOptions');
   if (opts.bearer) {
     opts.accessTokenType = 'Bearer';
   } else if (opts.prefix) {
@@ -114,16 +115,19 @@ export function slashTrim(path: string) {
  */
 export function urlPathJoin(path?: string | string[]) {
   if (!path) return undefined;
+  let hasPrefixSlash: boolean;
   /* 前缀数组 */
   const arr: string[] = [];
   if (typeof path === 'string') {
+    hasPrefixSlash = path.startsWith('/');
     arr.push(slashTrim(path));
   } else {
+    hasPrefixSlash = path[0].startsWith('/');
     const paths: string[] = path.map((m) => slashTrim(m));
     arr.push(...paths);
   }
   const result = arr.filter((p) => !!p).join('/');
-  return `/${result}`;
+  return `${result}`;
 }
 
 /**
@@ -160,8 +164,8 @@ export function trimApiPrefixUrl(url: string, micro?: string | string[]) {
  * @param url url 地址
  * @param paths 占位参数
  */
-export function replacePlaceholderParameters(url: string, paths: PathValue | Record<string, PathValue> = {}) {
-  let pathsKV: Record<string, PathValue> = {};
+export function replacePlaceholderParameters(url: string, paths: ParameterValue | Record<string, ParameterValue> = {}) {
+  let pathsKV: Record<string, ParameterValue> = {};
   const pathsKey = url.match(/(?<=\/?{)(.*?)(?=}\/?)/g) ?? [];
   if (typeof paths === 'object') {
     pathsKV = paths;
@@ -180,41 +184,22 @@ export function replacePlaceholderParameters(url: string, paths: PathValue | Rec
   return url;
 }
 
-// export function transformHttpClientOptions(url: string): HttpClientOptions;
-// export function transformHttpClientOptions(opts: HttpClientOptions): HttpClientOptions;
-// export function transformHttpClientOptions(url: string, opts: HttpClientOptions): HttpClientOptions;
+export function transformHttpClientOptions(url: string): HttpClientOptions;
+export function transformHttpClientOptions(opts: HttpClientOptions): HttpClientOptions;
+export function transformHttpClientOptions(url: string, opts: HttpClientOptions): HttpClientOptions;
 /**
  * 参数转换
  * @param urlOrOptions
  * @param options
  */
-// export function transformHttpClientOptions(
-//   urlOrOptions: string | HttpClientOptions,
-//   options: HttpClientOptions = {},
-// ): HttpClientOptions {
-//   let opts: HttpClientOptions = {};
-//   if (arguments.length === 1 && typeof urlOrOptions === 'string') {
-//     opts.url = urlOrOptions;
-//   } else if (arguments.length === 1 && typeof urlOrOptions !== 'string') {
-//     opts = urlOrOptions;
-//   } else {
-//     opts = merge(options, { url: urlOrOptions });
-//   }
-//   return opts;
-// }
-
-export const transformHttpClientOptions = (
-  urlOrOptions: string | HttpClientOptions,
-  options: HttpClientOptions = {},
-) => {
+export function transformHttpClientOptions(urlOrOptions: string | HttpClientOptions, options: HttpClientOptions = {}) {
   if (typeof urlOrOptions === 'string') {
-    options = options || {};
     options.url = urlOrOptions;
   } else {
     options = urlOrOptions || {};
   }
   return options;
-};
+}
 
 /**
  * 参数字符串话

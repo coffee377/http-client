@@ -1,5 +1,5 @@
 import { describe, expect, test } from '@jest/globals';
-import { HttpHeaders } from '../headers';
+import { HttpHeaders } from '../http/headers';
 
 describe('HttpHeaders', () => {
   describe('initialization', () => {

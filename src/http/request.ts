@@ -1,8 +1,8 @@
-import type {Property, SafeAny} from './types';
-import {HttpContext} from './context';
-import {HttpHeaders} from './headers';
-import {HttpParams} from './params';
-import {ResponseType} from './config';
+import type { Property, SafeAny } from '../types';
+import { HttpContext } from '../context';
+import { HttpHeaders } from './headers';
+import { HttpParams } from './params';
+import { ResponseType } from '../config';
 
 /**
  * Safely assert whether the given value is an ArrayBuffer.

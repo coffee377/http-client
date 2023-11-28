@@ -1,5 +1,5 @@
-import { HttpClientOptions } from '../types';
 import { SyncWaterfallHook } from 'tapable';
+import { HttpClientOptions } from '../config';
 
 class OptsHook extends SyncWaterfallHook<[HttpClientOptions]> {
   constructor(name?: string) {

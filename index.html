@@ -1,31 +1,16 @@
 <!DOCTYPE html>
 <html lang="zh">
-<head>
-    <meta charset="UTF-8"/>
+  <head>
+    <meta charset="UTF-8" />
     <title>Http Client</title>
-    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport"/>
-    <script>
-        window.__HTTP_CLIENT_CONFIG__ = {
-            env: 'test',
-            prefix: {
-                dev: '/dev',
-                test: 'http://teamwork-test.jqk8s.jqsoft.net/api',
-                prod: '/prod',
-                mock: '/mock'
-            },
-        };
-    </script>
-    <script src="../dist/umd/http-client.min.js"></script>
+    <meta content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" name="viewport" />
+    <!--    <script src="../dist/umd/http-client.min.js"></script>-->
     <!--    <script src="https://unpkg.com/axios@1.1.2/dist/axios.min.js"></script>-->
-</head>
-<body>
-<div id="app">
-    <div id="version"></div>
-    <button id="ok">确认</button>
-</div>
-<script>
-
-</script>
-<script src="/src/main.ts" type="module"></script>
-</body>
+  </head>
+  <body>
+    <div id="app">
+      <span>loading</span>
+    </div>
+    <script src="/demo/main.ts" type="module"></script>
+  </body>
 </html>

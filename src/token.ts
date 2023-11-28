@@ -25,7 +25,7 @@ export type StorageType = 'local' | 'session';
 export type TokenStorageKey = string | TokenConfiguration<string>;
 
 export const TOKEN_STORAGE_KEY: TokenConfiguration<string> = {
-  access_token: 'Authorization',
+  access_token: 'access_token',
   refresh_token: 'refresh_token',
   id_token: 'id_token',
 };
@@ -105,8 +105,8 @@ export interface TokenOptions {
  * 令牌管理器
  */
 interface TokenManager {
-  readonly storage: StorageType;
-  readonly storageKey: string;
+  readonly storage: TokenStorage;
+  readonly storageKey: TokenStorageKey;
 
   /**
    * 获取令牌
@@ -120,33 +120,28 @@ interface TokenManager {
   introspection(token: string): boolean;
 }
 
-interface TokenManager2 {
-  storage: TokenStorage;
-  tokenStorageKey: TokenStorageKey;
+export class DefaultTokenManager implements TokenManager {
+  constructor(opts?: TokenOptions) {}
 
-  getToken(storageType: StorageType): string;
+  readonly storage: TokenStorage;
+  readonly storageKey: TokenStorageKey;
 
-  getTokenParamKey(type: TokenType): string;
+  getToken(type: StorageType): string {
+    const key = this.storageKey[type];
+
+    /* 令牌存储类型 */
+    const sto = this.storage == 'session' ? sessionStorage : localStorage;
+
+    /* 获取令牌 */
+    const token = sto.getItem(key)?.replace(/["'](.*)["']/, '$1') || '';
+    return '';
+  }
+
+  getTokenParamKey(type: TokenType): string {
+    return '';
+  }
+
+  introspection(token: string): boolean {
+    return false;
+  }
 }
-
-// export class DefaultTokenManager implements TokenManager {
-//   constructor(opts?: TokenOptions) {}
-//
-//   storage: TokenStorage;
-//   tokenStorageKey: TokenStorageKey;
-//
-//   getToken(type: StorageType): string {
-//     const key = this.tokenStorageKey[type];
-//
-//     /* 令牌存储类型 */
-//     const sto = this.storage == 'session' ? sessionStorage : localStorage;
-//
-//     /* 获取令牌 */
-//     const token = sto.getItem(key)?.replace(/["'](.*)["']/, '$1') || '';
-//     return '';
-//   }
-//
-//   getTokenParamKey(type: TokenType): string {
-//     return '';
-//   }
-// }

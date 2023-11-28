@@ -1,46 +1,48 @@
-import { UriOptions } from '../types';
 import { AsArray, AsyncSeriesWaterfallHook } from 'tapable';
-import { deprecated, replacePlaceholderParameters, urlPathJoin } from '../utils';
+import { replacePlaceholderParameters, urlPathJoin } from '../utils';
 import { UriPlugin } from './const';
-
-interface UriPlugin {
-  name: string;
-  type?: '';
-  stage?: number;
-  before?: string;
-  fn: (url: string, opts: UriOptions) => string | Promise<string>;
-}
-
-// export type UriPlugin = (url: string, opts: UriOptions) => string | Promise<string>;
+import { UriOptions } from '../config';
 
 class UriHook extends AsyncSeriesWaterfallHook<[string, UriOptions]> {
   constructor(name: string = 'UriHook') {
     super(['url', 'options'] as AsArray<any>, name);
 
-    /* 去除 ”/api“ 前缀 */
-    this.tap({ name: 'api', stage: UriPlugin.API }, (url = '', opts) => {
+    /* 去除前端约定的默认 “/api” 前缀 */
+    this.tap({ name: 'api', stage: UriPlugin.TRIM_API }, (url = '', opts) => {
       return url.replace(/^\/api\/?(.*)/, '/$1');
     });
 
     /* 微服务前缀 */
     this.tap({ name: 'micro', stage: UriPlugin.MICRO }, (url, opts) => {
-      // ------------------------------------------------------- todo remove in next
-      deprecated(opts, 'microPrefix', 'microAlias', 'HttpClientOptions');
-      let microPrefix: string | string[] = opts.microPrefix;
-      // -------------------------------------------------------
-
-      /* 微服务前缀获取 */
-      if (opts.microService && opts.microAlias) microPrefix = opts.microService[opts.microAlias];
+      const { service, alias } = opts;
+      let microPrefix: string = '';
 
       const arr: string[] = [];
-      /* 微服务前缀 */
-      if (typeof microPrefix === 'string') {
-        arr.push(microPrefix);
-      } else if (Array.isArray(microPrefix)) {
-        arr.push(...microPrefix);
-      }
+      /* 微服务前缀获取 */
+      if (service && alias) microPrefix = service[alias];
+      if (microPrefix) arr.push(microPrefix);
+
       arr.push(url);
       return urlPathJoin(arr);
+    });
+
+    /* prefix 前缀 */
+    this.tap({ name: 'prefix', stage: UriPlugin.PREFIX }, (url, opts) => {
+      const { prefix = '', env = 'default' } = opts;
+      let envPrefix: Record<string, string> = {};
+
+      /* 局部配置 */
+      if (typeof prefix == 'string') {
+        envPrefix['default'] = prefix;
+      } else if (typeof prefix == 'object') {
+        envPrefix = prefix;
+      }
+
+      let f: string = '';
+
+      if (Reflect.has(envPrefix, env)) f = envPrefix[env];
+
+      return urlPathJoin([f, url]);
     });
 
     /* 占位参数替换 */

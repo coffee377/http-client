@@ -1,5 +1,5 @@
 import { HttpRequest } from './request';
-import { SafeAny } from './types';
+import { SafeAny } from '../types';
 import { HttpHandler } from './handler';
 import { Observable } from 'rxjs';
 import { HttpEvent } from './response';

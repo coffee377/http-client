@@ -1,4 +1,4 @@
-import { Nullable, ParameterValue } from './types';
+import { Nullable, ParameterValue } from '../types';
 
 const STANDARD_ENCODING_REGEX = /%(\d[a-f0-9])/gi;
 const STANDARD_ENCODING_REPLACEMENTS: { [x: string]: string } = {
@@ -80,7 +80,7 @@ export type HttpParamsValue = string | Record<string, ParameterValue | ReadonlyA
 
 export class HttpParams {
   private map: Map<string, string[]> = new Map<string, string[]>();
-  private encoder: HttpParameterCodec;
+  private readonly encoder: HttpParameterCodec;
 
   constructor(source?: Nullable<HttpParamsValue>, encoder?: HttpParameterCodec) {
     this.encoder = encoder ?? new HttpUrlEncodingCodec();
@@ -100,7 +100,7 @@ export class HttpParams {
     } else if (source) {
       Object.keys(source).forEach((param) => {
         const value = source[param];
-        this.map.set(param, Array.isArray(value) ? value.map(stringify) : [stringify(value)]);
+        this.map.set(param, Array.isArray(value) ? value.map(stringify) : [stringify(value as ParameterValue)]);
       });
     }
   }

@@ -1,7 +1,10 @@
-import { HttpHandler } from './handler';
-import { ParameterValue, Property } from './types';
+import { HttpAdapter, HttpHandler } from './http/handler';
+import { FiledInfo, ParameterValue, Property } from './types';
+import { HttpMethod } from './http/request';
+import { TokenOptions } from './token';
+import { DataConversion } from './data';
 
-export type Env = 'default' | 'dev' | 'test' | 'prod' | 'mock' | string;
+export type Env = 'default' | 'dev' | 'test' | 'pre' | 'prod' | string;
 
 export interface MicroService {
   /**
@@ -58,7 +61,7 @@ export interface MicroOptions {
   alias?: keyof MicroService | string;
 }
 
-export interface UriOptions extends MicroOptions {
+export interface UriOptions extends PrefixOptions, MicroOptions {
   /**
    * url 占位参数
    * 自动替换 {path} 相关占位参数
@@ -121,22 +124,77 @@ export type BodyData =
 
 export type ResponseType = 'json' | 'text' | 'blob' | 'arrayBuffer';
 
-export interface RequestOptions extends PrefixOptions {
+/**
+ * 通用配置选项
+ */
+export interface HttpClientCommonOptions {
   /**
    * HTTP 处理器
    */
-  handler?: HttpHandler;
+  factory?: 'fetch' | 'xhr' | HttpHandler;
 
   /**
-   * 环境名称
-   * @since 0.3.0
+   * 请求头配置
    */
-  env?: Env;
+  headers?: Record<string, string>;
 
   /**
-   * 接口请求（或指定环境）前缀
+   * 令牌相关配置
    */
-  prefix?: string | Record<string, string>;
+  token?: TokenOptions;
+
+  /**
+   * 数据格式化处理
+   * @deprecated use dataConversion instead
+   */
+  resultFormat?: DataConversion;
+
+  /**
+   * 响应数据处理
+   */
+  dataConversion?: DataConversion;
+
+  /**
+   * 响应实体相关字段配置
+   */
+  filedInfo?: FiledInfo;
+
+  /**
+   * 前端定义的错误信息映射
+   */
+  errorMapping?: Record<string | number, string>;
+}
+
+/**
+ * 全局配置
+ */
+export interface GlobalHttpClientConfiguration extends Omit<UriOptions, 'alias'>, HttpClientCommonOptions {
+  /**
+   * @description 接口是否代理到本地，配合接口代理(如 nginx)进行处理
+   * @default false
+   */
+  proxy?: boolean;
+}
+
+/**
+ * 请求参数
+ */
+export interface RequestOptions extends UriOptions, SimplifyOptions, HttpClientCommonOptions {
+  /**
+   * @description 请求接口地址
+   */
+  url?: string;
+
+  /**
+   * HTTP 处理器
+   */
+  factory?: 'fetch' | 'xhr' | HttpAdapter;
+
+  /**
+   * @description 请求方法
+   * @default GET
+   */
+  method?: HttpMethod;
 
   /**
    * 请求头
@@ -159,7 +217,7 @@ export interface RequestOptions extends PrefixOptions {
   responseType?: ResponseType;
 
   /**
-   * 是否报告相关进度
+   * 是否报告相关进度（上传下载时使用）
    */
   reportProgress?: boolean;
 
@@ -172,14 +230,12 @@ export interface RequestOptions extends PrefixOptions {
   // omit: Never send or receive cookies.
   // same-origin: Send user credentials (cookies, basic http auth, etc..) if the URL is on the same origin as the calling script. This is the default value.
   // include: Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
-  credentials?: 'omit' | 'same-origin' | 'include'; // default
+  // credentials?: 'omit' | 'same-origin' | 'include'; // default
 }
 
-export interface HttpConfig extends RequestOptions {
+export interface HttpClientOptions extends RequestOptions {
   /**
-   * The default HTTP backend handler
+   * @description 请求接口地址
    */
-  handler?: HttpHandler;
+  url?: string;
 }
-
-export const config: HttpConfig = {};

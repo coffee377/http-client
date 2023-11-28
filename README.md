@@ -16,7 +16,7 @@
 - https://cdn.jsdelivr.net/npm/@jqsoft/http-client@0.3.0/dist/umd/http-client.min.js
 
 ```js
-<script src="https://unpkg.com/@jqsoft/http-client@0.3.0/dist/umd/http-client.min.js"/>
+<script src="https://unpkg.com/@jqsoft/http-client@0.3.0/dist/umd/http-client.min.js" />
 ```
 
 - Using pnpm, run the following on a command line:
@@ -60,8 +60,9 @@ pnpm run build
 ## 相关资源
 
 | name          | npm                                                      |                                    备注                                     |
-|:--------------|:---------------------------------------------------------|:-------------------------------------------------------------------------:|
-| axios         | ![npm](https://img.shields.io/npm/v/axios)               |                                    单元格                                    |
-| umi-request   | ![npm](https://img.shields.io/npm/v/umi-request)         |                                    单元格                                    |
+| :------------ | :------------------------------------------------------- | :-------------------------------------------------------------------------: |
+| @ngify/http         | ![npm](https://img.shields.io/npm/v/@ngify/http)               |                                                                       |
+| axios         | ![npm](https://img.shields.io/npm/v/axios)               |                                                                       |
+| umi-request   | ![npm](https://img.shields.io/npm/v/umi-request)         |                                                                       |
 | father        | ![npm](https://img.shields.io/npm/v/father?label=father) | [文档](https://github.com/umijs/father/blob/a96c02aee0/docs/guide/index.md) |
-| jsonpath-plus | ![npm](https://img.shields.io/npm/v/jsonpath-plus)       |                                    单元格                                    |
+| jsonpath-plus | ![npm](https://img.shields.io/npm/v/jsonpath-plus)       |                                                                       |
