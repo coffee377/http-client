@@ -107,7 +107,7 @@ export class HttpHeaderResponse extends HttpResponseBase {
   }
 }
 
-export class HttpResponse<T> extends HttpResponseBase {
+export class HttpResponse<T= any> extends HttpResponseBase {
   readonly body: T | null;
   override readonly type: HttpEventType.Response = HttpEventType.Response;
 
@@ -117,7 +117,7 @@ export class HttpResponse<T> extends HttpResponseBase {
     this.body = body !== undefined ? body : null;
   }
 
-  clone<D = T>(update: ConstructorParameters<typeof HttpResponse>[1] = {}): HttpResponse<D> {
+  clone<D = T>(update: HttpResponseOptions<D> = {}): HttpResponse<D> {
     const body = (update.body !== undefined ? update.body : this.body) as D;
     return new HttpResponse<D>({
       url: update.url || this.url || undefined,

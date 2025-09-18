@@ -1,19 +1,18 @@
 import { Observable, Observer } from 'rxjs';
 
+import type { HttpEvent, HttpHandler } from '../index';
 import {
+  HttpAdapter,
+  HttpDownloadProgressEvent,
+  HttpErrorResponse,
+  HttpEventType,
+  HttpHeaderResponse,
   HttpHeaders,
   HttpRequest,
   HttpResponse,
-  HttpErrorResponse,
-  HttpAdapter,
-  HttpEventType,
-  HttpHeaderResponse,
-  HttpDownloadProgressEvent,
   HttpStatusCode,
 } from '../index';
-import type { HttpHandler, HttpEvent } from '../index';
 import type { SafeAny } from '../../types';
-import { fromFetch } from 'rxjs/fetch';
 
 const XSSI_PREFIX = /^\)\]\}',?\n/;
 
@@ -48,7 +47,7 @@ export class HttpFetch extends HttpAdapter {
     // We use an arrow function to always reference the current global implementation of `fetch`.
     // This is helpful for cases when the global `fetch` implementation is modified by external code,
     // see https://github.com/angular/angular/issues/57527.
-    private fetchImpl: typeof fetch = (...args) => globalThis.fetch(...args),
+    private fetchImpl: typeof fetch = (input, init) => globalThis.fetch(input, init),
   ) {
     super();
   }
@@ -78,9 +77,10 @@ export class HttpFetch extends HttpAdapter {
     const init = this.createRequestInit(request);
     let response: Response;
 
-    const responseObservable = fromFetch(request.urlWithParams);
+    // const responseObservable = fromFetch(request.urlWithParams);
 
     try {
+      // console.log(request.urlWithParams);
       const fetchPromise = this.fetchImpl(request.urlWithParams, { signal, ...init });
 
       // Make sure Zone.js doesn't trigger false-positive unhandled promise
@@ -116,51 +116,124 @@ export class HttpFetch extends HttpAdapter {
       observer.next(new HttpHeaderResponse({ headers, status, statusText, url }));
     }
 
+    const onProgress = (loaded: number, total?: number, progress?: number, partialText?: string) => {
+      if (progress !== null) {
+        console.log(`进度: ${progress.toFixed(2)}% (${loaded}/${total} 字节)`);
+        // 实际应用中可更新UI进度条：document.getElementById('progress').style.width = `${progress}%`;
+      } else {
+        console.log(`已加载: ${loaded} 字节（总大小未知）`);
+      }
+      observer.next({
+        type: HttpEventType.DownloadProgress,
+        total,
+        loaded,
+        partialText,
+      } as HttpDownloadProgressEvent);
+    };
+
     if (response.body) {
       // Read Progress
       const contentLength = response.headers.get('content-length');
-      const totalSize = parseInt(contentLength, 10);
-
-      // response.body.pipeThrough(new ReadProgressTransformer(observer, totalSize));
-
-      const chunks: Uint8Array[] = [];
-      const reader = response.body.getReader();
-
-      let receivedLength = 0;
-
+      const totalBytes = parseInt(contentLength, 10);
+      let loadedBytes = 0; // 已加载的字节数
+      console.log('totalBytes => ', totalBytes);
       let decoder: TextDecoder;
       let partialText: string | undefined;
-
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) {
-          break;
-        }
-
-        chunks.push(value);
-        receivedLength += value.length;
-
-        if (request.reportProgress) {
+      // 1. 创建带进度跟踪的转换流
+      const progressTransformer = new TransformStream<Uint8Array, Uint8Array>({
+        transform(chunk, controller) {
+          // 累加已处理的字节数（chunk通常是Uint8Array）
+          loadedBytes += chunk.byteLength;
           partialText =
             request.responseType === 'text'
-              ? (partialText ?? '') + (decoder ??= new TextDecoder()).decode(value, { stream: true })
+              ? (partialText ?? '') + (decoder ??= new TextDecoder()).decode(chunk, { stream: true })
               : undefined;
+          // 计算进度并回调
+          if (totalBytes) {
+            const progress = (loadedBytes / totalBytes) * 100;
+            onProgress(loadedBytes, totalBytes, progress);
+          } else {
+            // 无总长度时，仅反馈已加载字节数
+            onProgress(loadedBytes, null, null);
+          }
 
-          observer.next({
-            type: HttpEventType.DownloadProgress,
-            total: contentLength ? +contentLength : undefined,
-            loaded: receivedLength,
-            partialText,
-          } as HttpDownloadProgressEvent);
-        }
-      }
+          // 将数据块传递到下一个流（不修改数据）
+          controller.enqueue(chunk);
+        },
+        flush(controller) {
+          // 流结束时确保最后一次进度更新
+          onProgress(totalBytes, totalBytes, 100);
+          controller.terminate();
+        },
+      });
+
+      // 2. 创建最终的可写流（这里示例：将数据存入ArrayBuffer）
+      const resultBuffer: Uint8Array[] = [];
+      let chunksAll: Uint8Array;
+      const writeStream = new WritableStream<Uint8Array>({
+        write(data) {
+          resultBuffer.push(data);
+          // 实际场景中可写入文件、更新DOM等
+        },
+        close() {
+          // 拼接所有数据块为完整的ArrayBuffer
+          const totalLength = resultBuffer.reduce((sum, chunk) => sum + chunk.byteLength, 0);
+          chunksAll = new Uint8Array(totalLength);
+          let offset = 0;
+          for (const chunk of resultBuffer) {
+            chunksAll.set(chunk, offset);
+            offset += chunk.byteLength;
+          }
+        },
+        abort(reason) {
+          // console.error('流被中止:', reason);
+        },
+      });
+
+      // 4. 管道链：响应流 → 进度跟踪转换流 → 可写流
+      const readableStream = await response.body.pipeThrough(progressTransformer);
+
+      // const chunks: Uint8Array[] = [];
+      // const reader = response.body.getReader();
+      //
+      // let receivedLength = 0;
+      //
+      // let decoder: TextDecoder;
+      // let partialText: string | undefined;
+      //
+      // while (true) {
+      //   const { done, value } = await reader.read();
+      //
+      //   if (done) {
+      //     break;
+      //   }
+      //
+      //   chunks.push(value);
+      //   receivedLength += value.length;
+      //
+      //   if (request.reportProgress) {
+      //     partialText =
+      //       request.responseType === 'text'
+      //         ? (partialText ?? '') + (decoder ??= new TextDecoder()).decode(value, { stream: true })
+      //         : undefined;
+      //
+      //     observer.next({
+      //       type: HttpEventType.DownloadProgress,
+      //       total: contentLength ? +contentLength : undefined,
+      //       loaded: receivedLength,
+      //       partialText,
+      //     } as HttpDownloadProgressEvent);
+      //   }
+      // }
 
       // Combine all chunks.
-      const chunksAll = this.concatChunks(chunks, receivedLength);
+      //  chunksAll = this.concatChunks(chunks, receivedLength);
       try {
-        const contentType = response.headers.get('Content-Type') ?? '';
-        body = this.parseBody(request, chunksAll, contentType);
+        const res = new Response(readableStream, {});
+        // console.log(json);
+        // const contentType = response.headers.get('Content-Type') ?? '';
+        // body = this.parseBody(request, chunksAll, contentType);
+        body = await res.json();
       } catch (error) {
         // Body loading or parsing failed
         observer.error(
@@ -227,10 +300,10 @@ export class HttpFetch extends HttpAdapter {
       }
       case 'text':
         return new TextDecoder().decode(binContent);
-      case 'blob':
-        return new Blob([binContent], { type: contentType });
-      case 'arraybuffer':
-        return binContent.buffer;
+      // case 'blob':
+      //   return new Blob([binContent], { type: contentType });
+      // case 'arraybuffer':
+      //   return binContent.buffer;
     }
   }
 

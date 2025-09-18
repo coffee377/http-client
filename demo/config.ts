@@ -7,13 +7,14 @@ Object.defineProperty(window, '__HTTP_CLIENT_CONFIG__', {
   configurable: false,
   enumerable: false,
   value: {
-    env: 'test',
+    env: 'dev',
     services: {
       auth: 'basic',
       base: 'basic',
+      oneself: '',
     },
     prefix: {
-      dev: '/dev',
+      dev: 'https://api.github.com',
       test: 'http://teamwork-test.jqk8s.jqsoft.net/api',
       prod: '/prod',
     },

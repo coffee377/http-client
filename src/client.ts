@@ -2,12 +2,14 @@ import { DEFAULT_HTTP_CLIENT_CONFIGURATION } from './window';
 import { VERSION } from './data';
 import { HeaderHook, OptsHook, UriHook } from './hooks';
 import { merge, mergeWith } from 'lodash-es';
-import { HttpAdapter } from './http';
+import { HttpAdapter, HttpEvent } from './http';
 import { HttpInterceptor } from './http/interceptor';
 import { HttpFetch } from './http/handlers';
 import { HttpRequest } from './http';
 import { HttpResponse } from './http';
 import { GlobalHttpClientConfiguration, HttpClientOptions } from './config';
+import { concatMap, filter, firstValueFrom, lastValueFrom, map, Observable, of } from 'rxjs';
+import { SafeAny } from './types';
 
 export class HttpClient {
   /***
@@ -58,6 +60,32 @@ export class HttpClient {
     }
   }
 
+  request1<R>(request: HttpRequest<SafeAny>, options?: { observe?: 'body' }): Observable<R>;
+  request1<R>(request: HttpRequest<SafeAny>, options?: { observe?: 'events' }): Observable<HttpEvent<R>>;
+  request1<R>(request: HttpRequest<SafeAny>, options?: { observe?: 'response' }): Observable<HttpResponse<R>>;
+  request1<R>(
+    request: HttpRequest<SafeAny>,
+    options?: { observe?: 'body' | 'events' | 'response' },
+  ): Observable<R | HttpEvent<R> | HttpResponse<R>>;
+  request1(
+    request: HttpRequest<SafeAny>,
+    options: { observe?: 'body' | 'events' | 'response' } = {},
+  ): Observable<SafeAny> {
+    const events$ = of(request).pipe(concatMap((req: HttpRequest<unknown>) => this.handler.handle(req)));
+    const res$ = events$.pipe(filter((event: HttpEvent<unknown>) => event instanceof HttpResponse)) as Observable<
+      HttpResponse<unknown>
+    >;
+
+    switch (options.observe) {
+      case 'events':
+        return events$;
+      case 'response':
+        return res$;
+      default:
+        return res$.pipe(map((response) => response.body));
+    }
+  }
+
   request<R = any>(url: string): Promise<R>;
   request<R = any>(options: HttpClientOptions): Promise<R>;
   request<R = any>(url: string, options: HttpClientOptions): Promise<R>;
@@ -80,35 +108,47 @@ export class HttpClient {
     /* 3. uri hook */
     const url = await this.hooks.url.promise(opts.url, opts);
 
-    const req = new HttpRequest(opts.method.toUpperCase(), url, {
+    const req = new HttpRequest(opts.method, url, {
       body: opts.data,
       params: {},
       headers,
       responseType: opts.responseType,
-      reportProgress: !!opts.download || !!opts.upload,
+      // reportProgress: !!opts.download || !!opts.upload,
       withCredentials: !!opts.withCredentials,
     });
 
-    this.handler.handle(req).subscribe((res) => {
-      console.log(res);
-      // res.type
-    });
+    const events$ = of(req).pipe(concatMap((req: HttpRequest<SafeAny>) => this.handler.handle(req)));
+    const res$ = events$.pipe(filter((event: HttpEvent<SafeAny>) => event instanceof HttpResponse)) as Observable<
+      HttpResponse<SafeAny>
+    >;
 
-    const res = (await this.handler.promise(req)) as HttpResponse<any>;
-    // console.log(res);
-    console.debug(`
-    --------------------------------------------------------
-     环境：${opts.env}
-     ${req.method} ${req.url}
-     请求头: ${JSON.stringify(req.headers.toObject())}
-     请数据: ${req.serializeBody()}
-    `);
-    // console.table(d);
+    // opts.observe = 'response';
 
-    // console.log(`请求 => ${opts.method.toUpperCase()} ${url}`);
+    switch (opts['observe']) {
+      case 'events':
+        return (await firstValueFrom(events$)) as any;
+      case 'response':
+        return (await firstValueFrom(res$)) as any;
+      default:
+        const data$ = res$.pipe(map((response) => response.body));
+        return (await firstValueFrom(data$)) as any;
+    }
 
-    // console.log(opts);
-    return res.body;
+    // const res = (await this.handler.promise(req)) as HttpResponse<any>;
+    // // console.log(res);
+    // console.debug(`
+    // --------------------------------------------------------
+    //  环境：${opts.env}
+    //  ${req.method} ${req.url}
+    //  请求头: ${JSON.stringify(req.headers.toObject())}
+    //  请数据: ${req.serializeBody()}
+    // `);
+    // // console.table(d);
+    //
+    // // console.log(`请求 => ${opts.method.toUpperCase()} ${url}`);
+    //
+    // // console.log(opts);
+    // return res.body;
   }
 
   get<R = any>(url: string): Promise<R>;

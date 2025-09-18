@@ -10,6 +10,9 @@ export interface HttpHandler {
 export abstract class HttpAdapter implements HttpHandler {
   promise(request: HttpRequest<SafeAny>): Promise<SafeAny> {
     const observable = this.handle(request);
+    observable.subscribe((res) => {
+      console.log('subscribe >>>> ', res);
+    });
     return lastValueFrom(observable);
   }
 
