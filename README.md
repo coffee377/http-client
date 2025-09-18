@@ -59,10 +59,11 @@ pnpm run build
 
 ## 相关资源
 
-| name          | npm                                                      |                                    备注                                     |
+| name          | npm                                                      |                                    备注                                    |
 | :------------ | :------------------------------------------------------- | :-------------------------------------------------------------------------: |
-| @ngify/http         | ![npm](https://img.shields.io/npm/v/@ngify/http)               |                                                                       |
-| axios         | ![npm](https://img.shields.io/npm/v/axios)               |                                                                       |
-| umi-request   | ![npm](https://img.shields.io/npm/v/umi-request)         |                                                                       |
+| @ngify/http   | ![npm](https://img.shields.io/npm/v/@ngify/http)         |                                                                            |
+| axios         | ![npm](https://img.shields.io/npm/v/axios)               |                                                                            |
+| umi-request   | ![npm](https://img.shields.io/npm/v/umi-request)         |                                                                            |
 | father        | ![npm](https://img.shields.io/npm/v/father?label=father) | [文档](https://github.com/umijs/father/blob/a96c02aee0/docs/guide/index.md) |
-| jsonpath-plus | ![npm](https://img.shields.io/npm/v/jsonpath-plus)       |                                                                       |
+| jsonpath-plus | ![npm](https://img.shields.io/npm/v/jsonpath-plus)       |                                                                            |
+

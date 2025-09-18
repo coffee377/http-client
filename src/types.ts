@@ -24,44 +24,10 @@ export interface ResultFieldInfo {
    * 记录整条数字段
    */
   total?: string;
-}
-
-/**
- * 分页配置
- */
-export interface PageFieldInfo {
   /**
-   * 总记录条数字段
+   * 汇总数据字段
    */
-  total?: string;
-  /**
-   * 总页数字段
-   */
-  count?: string;
-  /**
-   * 当前页码字段
-   */
-  pageNum?: string;
-  /**
-   * 页面数据条数字段
-   */
-  pageSize?: string;
-  /**
-   * 数据记录字段
-   */
-  records?: string;
-}
-
-export interface FiledInfo {
-  /**
-   * 响应结果相关配置
-   */
-  result?: ResultFieldInfo;
-
-  /**
-   * 分页信息配置
-   */
-  page?: PageFieldInfo;
+  summary?: string;
 }
 
 export type UrlRewrite<Context extends HttpClientOptions> = (

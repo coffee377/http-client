@@ -2,11 +2,11 @@ import { DEFAULT_HTTP_CLIENT_CONFIGURATION } from './window';
 import { VERSION } from './data';
 import { HeaderHook, OptsHook, UriHook } from './hooks';
 import { merge, mergeWith } from 'lodash-es';
-import { HttpAdapter } from './http/handler';
+import { HttpAdapter } from './http';
 import { HttpInterceptor } from './http/interceptor';
-import { FetchAdapter, HttpXhrAdapter } from './http/handlers';
-import { HttpRequest } from './http/request';
-import { HttpResponse } from './http/response';
+import { HttpFetch } from './http/handlers';
+import { HttpRequest } from './http';
+import { HttpResponse } from './http';
 import { GlobalHttpClientConfiguration, HttpClientOptions } from './config';
 
 export class HttpClient {
@@ -44,8 +44,8 @@ export class HttpClient {
       header: new HeaderHook(),
       url: new UriHook(),
     };
-    this.handlers.set('fetch', new FetchAdapter());
-    this.handlers.set('xhr', new HttpXhrAdapter());
+    this.handlers.set('fetch', new HttpFetch());
+    // this.handlers.set('xhr', new HttpXhrAdapter());
     this.handler = this.handlers.get('fetch');
 
     if (this.interceptors) {
@@ -89,10 +89,10 @@ export class HttpClient {
       withCredentials: !!opts.withCredentials,
     });
 
-    // this.handler.handle(req).subscribe((res) => {
-    //   console.log(res);
-    //   // res.type
-    // });
+    this.handler.handle(req).subscribe((res) => {
+      console.log(res);
+      // res.type
+    });
 
     const res = (await this.handler.promise(req)) as HttpResponse<any>;
     // console.log(res);
@@ -100,11 +100,8 @@ export class HttpClient {
     --------------------------------------------------------
      环境：${opts.env}
      ${req.method} ${req.url}
-     
      请求头: ${JSON.stringify(req.headers.toObject())}
-     
      请数据: ${req.serializeBody()}
-
     `);
     // console.table(d);
 

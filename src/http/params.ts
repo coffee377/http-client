@@ -123,13 +123,13 @@ export class HttpParams {
   }
 
   append(param: string, value: ParameterValue): HttpParams {
-    // const clone = this.clone();
-    const values = this.map.get(param) || [];
+    const clone = this.clone();
+    const values = clone.map.get(param) || [];
 
     values.push(stringify(value));
-    this.map.set(param, values);
+    clone.map.set(param, values);
 
-    return this;
+    return clone;
   }
 
   appendAll(params: {

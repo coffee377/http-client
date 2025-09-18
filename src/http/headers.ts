@@ -1,5 +1,5 @@
 export type HeaderValue = string | string[];
-export type RawHeaders = string | Record<string, HeaderValue>;
+export type RawHeaders = string | Record<string, HeaderValue> | Headers;
 
 export class HttpHeaders {
   /** lowercase name => values */
@@ -20,6 +20,12 @@ export class HttpHeaders {
           this.headers.set(key, base);
           this.setNormalizedName(key, name);
         }
+      });
+    } else if (typeof Headers !== 'undefined' && headers instanceof Headers) {
+      headers.forEach((value: string, name: string) => {
+        const key = name.trim().toLowerCase();
+        this.addHeaderEntry(key, value);
+        this.setNormalizedName(key, name);
       });
     } else if (headers) {
       Object.keys(headers).forEach((name) => {
@@ -148,10 +154,20 @@ export class HttpHeaders {
   }
 
   /**
-   * @param lowercase lowercase name
+   * @param key lowercase name
    * @param normalized normalized name
    */
-  private setNormalizedName(lowercase: string, normalized: string) {
-    this.normalizedNames.has(lowercase) || this.normalizedNames.set(lowercase, normalized);
+  private setNormalizedName(key: string, normalized: string) {
+    if (!this.normalizedNames.has(key)) {
+      this.normalizedNames.set(key, normalized);
+    }
+  }
+
+  private addHeaderEntry(key: string, value: string) {
+    if (this.headers.has(key)) {
+      this.headers.get(key)!.push(value);
+    } else {
+      this.headers.set(key, [value]);
+    }
   }
 }

@@ -21,7 +21,6 @@ export enum HttpEventType {
 export interface HttpProgressEvent {
   /** Progress event type is either upload or download. */
   type: HttpEventType.DownloadProgress | HttpEventType.UploadProgress;
-
   /** Number of bytes uploaded or downloaded. */
   loaded: number;
   /** Total number of bytes to upload or download. Depending on the request or response */
@@ -58,11 +57,15 @@ export interface HttpJsonParseError {
   text: string;
 }
 
-export interface HttpResponseOptions {
-  url?: string;
+export interface HttpHeaderResponseOptions {
+  headers?: HttpHeaders;
   status?: number;
   statusText?: string;
-  headers?: HttpHeaders;
+  url?: string;
+}
+
+export interface HttpResponseOptions<T> extends HttpHeaderResponseOptions {
+  body?: T;
 }
 
 /** Base class for both `HttpResponse` and `HttpHeaderResponse`. */
@@ -75,7 +78,7 @@ export abstract class HttpResponseBase {
   readonly type!: HttpEventType.Response | HttpEventType.ResponseHeader;
 
   protected constructor(
-    options: HttpResponseOptions,
+    options: HttpHeaderResponseOptions,
     defaultStatus: number = HttpStatusCode.Ok,
     defaultStatusText = 'OK',
   ) {
@@ -90,7 +93,7 @@ export abstract class HttpResponseBase {
 export class HttpHeaderResponse extends HttpResponseBase {
   override readonly type: HttpEventType.ResponseHeader = HttpEventType.ResponseHeader;
 
-  constructor(options: HttpResponseOptions = {}) {
+  constructor(options: HttpHeaderResponseOptions = {}) {
     super(options);
   }
 
@@ -108,20 +111,26 @@ export class HttpResponse<T> extends HttpResponseBase {
   readonly body: T | null;
   override readonly type: HttpEventType.Response = HttpEventType.Response;
 
-  constructor(body?: T, options: HttpResponseOptions & { body?: T | null } = {}) {
+  constructor(options: HttpResponseOptions<T> = {}) {
     super(options);
+    const { body } = options;
     this.body = body !== undefined ? body : null;
   }
 
   clone<D = T>(update: ConstructorParameters<typeof HttpResponse>[1] = {}): HttpResponse<D> {
     const body = (update.body !== undefined ? update.body : this.body) as D;
-    return new HttpResponse<D>(body, {
+    return new HttpResponse<D>({
       url: update.url || this.url || undefined,
       status: update.status || this.status,
       statusText: update.statusText || this.statusText,
       headers: update.headers || this.headers,
+      body: body,
     });
   }
+}
+
+export interface HttpErrorResponseOptions extends HttpHeaderResponseOptions {
+  error?: SafeAny;
 }
 
 export class HttpErrorResponse extends HttpResponseBase implements Error {
@@ -130,7 +139,7 @@ export class HttpErrorResponse extends HttpResponseBase implements Error {
   readonly error: SafeAny | null;
   override readonly ok = false;
 
-  constructor(options: { url?: string; error?: SafeAny; headers?: HttpHeaders; status?: number; statusText?: string }) {
+  constructor(options: HttpErrorResponseOptions) {
     super(options, 0, 'Unknown Error');
 
     // 如果响应成功，那么这是一个解析错误。

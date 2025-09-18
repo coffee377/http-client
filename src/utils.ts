@@ -115,15 +115,12 @@ export function slashTrim(path: string) {
  */
 export function urlPathJoin(path?: string | string[]) {
   if (!path) return undefined;
-  let hasPrefixSlash: boolean;
   /* 前缀数组 */
   const arr: string[] = [];
   if (typeof path === 'string') {
-    hasPrefixSlash = path.startsWith('/');
     arr.push(slashTrim(path));
   } else {
-    hasPrefixSlash = path[0].startsWith('/');
-    const paths: string[] = path.map((m) => slashTrim(m));
+    const paths: string[] = path.map(slashTrim);
     arr.push(...paths);
   }
   const result = arr.filter((p) => !!p).join('/');

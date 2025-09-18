@@ -8,7 +8,7 @@ Object.defineProperty(window, '__HTTP_CLIENT_CONFIG__', {
   enumerable: false,
   value: {
     env: 'test',
-    service: {
+    services: {
       auth: 'basic',
       base: 'basic',
     },

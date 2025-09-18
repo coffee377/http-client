@@ -11,7 +11,7 @@ export interface TokenConfiguration<V> {
  * 令牌类型
  * @see https://datatracker.ietf.org/doc/html/draft-ietf-oauth-v2-1-05
  */
-export type TokenType = keyof TokenConfiguration<any>;
+export type TokenType = keyof TokenConfiguration<unknown>;
 
 /**
  * 令牌存储类型
@@ -52,15 +52,6 @@ export const TOKEN_STORAGE: TokenConfiguration<StorageType> = {
   refresh_token: 'local',
 };
 
-/**
- * 令牌配置
- */
-export interface TokenConfiguration<V> {
-  access_token: V;
-  refresh_token?: V;
-  id_token?: V;
-}
-
 export interface TokenOptions {
   /**
    * 多令牌支持
@@ -76,19 +67,6 @@ export interface TokenOptions {
    * 令牌存储在 Storage 的 Key 值
    */
   storageKey?: TokenStorageKey;
-
-  /**
-   * 访问令牌前缀
-   * @deprecated use accessTokenType instead
-   */
-  prefix?: string;
-
-  /**
-   * 是否 bearer token
-   * @default false
-   * @deprecated use accessTokenType instead
-   */
-  bearer?: boolean;
 
   /**
    * 访问令牌类型

@@ -14,12 +14,12 @@ class UriHook extends AsyncSeriesWaterfallHook<[string, UriOptions]> {
 
     /* 微服务前缀 */
     this.tap({ name: 'micro', stage: UriPlugin.MICRO }, (url, opts) => {
-      const { service, alias } = opts;
+      const { services, alias } = opts;
       let microPrefix: string = '';
 
       const arr: string[] = [];
       /* 微服务前缀获取 */
-      if (service && alias) microPrefix = service[alias];
+      if (services && alias) microPrefix = services[alias];
       if (microPrefix) arr.push(microPrefix);
 
       arr.push(url);
@@ -38,11 +38,11 @@ class UriHook extends AsyncSeriesWaterfallHook<[string, UriOptions]> {
         envPrefix = prefix;
       }
 
-      let f: string = '';
+      let pre: string = '';
 
-      if (Reflect.has(envPrefix, env)) f = envPrefix[env];
+      if (Reflect.has(envPrefix, env)) pre = envPrefix[env];
 
-      return urlPathJoin([f, url]);
+      return urlPathJoin([pre, url]);
     });
 
     /* 占位参数替换 */

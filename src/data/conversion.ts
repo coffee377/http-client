@@ -3,7 +3,6 @@ import { JSONPath, JSONPathOptions } from 'jsonpath-plus';
 /**
  * 数据转换
  * @see https://www.npmjs.com/package/jsonpath-plus
- * @see https://github.com/JSONPath-Plus/JSONPath
  */
 export type DataConversion<Result = any, Data = any> =
   | ((data: Data) => Result)

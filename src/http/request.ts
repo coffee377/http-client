@@ -36,22 +36,7 @@ function isUrlSearchParams(value: SafeAny): value is URLSearchParams {
   return typeof URLSearchParams !== 'undefined' && value instanceof URLSearchParams;
 }
 
-export type HttpMethod =
-  | 'get'
-  | 'GET'
-  | 'post'
-  | 'POST'
-  | 'put'
-  | 'PUT'
-  | 'delete'
-  | 'DELETE'
-  | 'options'
-  | 'OPTIONS'
-  | 'head'
-  | 'HEAD'
-  | 'patch'
-  | 'PATCH'
-  | string;
+export type HttpMethod = 'DELETE' | 'GET' | 'HEAD' | 'POST' | 'OPTIONS' | 'PUT' | 'PATCH';
 
 export interface HttpRequestOptions<T> {
   body?: T;
@@ -64,7 +49,7 @@ export interface HttpRequestOptions<T> {
 }
 
 export class HttpRequest<T> {
-  readonly body: T | null;
+  readonly body?: T | null;
   readonly params!: HttpParams;
   readonly headers!: HttpHeaders;
   readonly context!: HttpContext;
@@ -73,11 +58,15 @@ export class HttpRequest<T> {
   readonly reportProgress: boolean;
   readonly withCredentials: boolean;
 
-  constructor(readonly method: HttpMethod, readonly url: string, options?: HttpRequestOptions<T>) {
+  constructor(
+    readonly method: HttpMethod,
+    readonly url: string,
+    options?: HttpRequestOptions<T>,
+  ) {
     const { body, params, headers, context, responseType, reportProgress, withCredentials } = options || {};
 
     this.body = body !== undefined ? body : null;
-    this.params = params instanceof HttpParams ? params : new HttpParams(params || undefined);
+    this.params = params instanceof HttpParams ? params : new HttpParams(params);
     this.headers = headers instanceof HttpHeaders ? headers : new HttpHeaders(headers);
     this.context = context || new HttpContext();
     this.responseType = responseType || 'json';
@@ -99,6 +88,7 @@ export class HttpRequest<T> {
   }
 
   /**
+   * @deprecated
    * Examine the body and attempt to infer an appropriate MIME type for it.
    * If no such type can be inferred, this method will return `null`.
    */

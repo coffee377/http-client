@@ -21,14 +21,10 @@ describe('HttpHeaders', () => {
 
     test('should lazily append values', () => {
       const src = new HttpHeaders();
-      const a = src.append('foo', 'a');
-      const b = a.append('foo', 'b');
-      const c = b.append('foo', 'c');
+      src.append('foo', 'a');
+      src.append('foo', 'b');
+      src.append('foo', 'c');
       expect(src.getAll('foo')).toEqual(['a', 'b', 'c']);
-      // expect(src.getAll('foo')).toBeNull();
-      // expect(a.getAll('foo')).toEqual(['a']);
-      // expect(b.getAll('foo')).toEqual(['a', 'b']);
-      // expect(c.getAll('foo')).toEqual(['a', 'b', 'c']);
     });
 
     test('should keep the last value when initialized from an object', () => {

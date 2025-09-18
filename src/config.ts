@@ -1,10 +1,32 @@
-import { HttpAdapter, HttpHandler } from './http/handler';
-import { FiledInfo, ParameterValue, Property } from './types';
-import { HttpMethod } from './http/request';
+import { HttpAdapter, HttpHandler } from './http';
+import { ParameterValue, Property, ResultFieldInfo } from './types';
+import { HttpMethod } from './http';
 import { TokenOptions } from './token';
 import { DataConversion } from './data';
 
-export type Env = 'default' | 'dev' | 'test' | 'pre' | 'prod' | string;
+export interface EnvPrefix {
+  dev?: string;
+  test?: string;
+  pre?: string;
+  prod?: string;
+  mock?: string;
+  [key: string]: string;
+}
+
+export type Env = 'default' | keyof EnvPrefix;
+
+export interface PrefixOptions {
+  /**
+   * 环境名称
+   * @since 0.3.0
+   */
+  env?: Env;
+
+  /**
+   * 接口请求（或指定环境）前缀
+   */
+  prefix?: string | EnvPrefix;
+}
 
 export interface MicroService {
   /**
@@ -28,40 +50,21 @@ export interface MicroService {
   oneself?: string;
 }
 
-/**
- * 微服务配置
- * @deprecated
- */
-export interface MicroServiceConfiguration extends MicroService {}
-
-export interface PrefixOptions {
-  /**
-   * 环境名称
-   * @since 0.3.0
-   */
-  env?: Env;
-
-  /**
-   * 接口请求（或指定环境）前缀
-   */
-  prefix?: string | Record<string, string>;
-}
-
-export interface MicroOptions {
+export interface MicroOptions<M extends MicroService = MicroService> {
   /**
    * 微服务配置（ <服务别名>:<前缀> ）
    * @since 1.0
    */
-  service?: MicroService & Record<string, string>;
+  services?: M;
 
   /**
    * @description 微服务别名（配置的 key）
    * @since 1.0
    */
-  alias?: keyof MicroService | string;
+  alias?: keyof M;
 }
 
-export interface UriOptions extends PrefixOptions, MicroOptions {
+export interface UriOptions<M extends MicroService = MicroService> extends PrefixOptions, MicroOptions<M> {
   /**
    * url 占位参数
    * 自动替换 {path} 相关占位参数
@@ -85,30 +88,6 @@ export interface UriOptions extends PrefixOptions, MicroOptions {
    * @param params
    */
   paramsSerializer?: (params: Record<string, ParameterValue>) => string;
-}
-
-/**
- * 简化参数
- */
-export interface SimplifyOptions {
-  /**
-   * 是否使用模拟数据
-   */
-  mock?: boolean;
-
-  /**
-   * @description 是否文件上传(requestType = 'form')
-   * @default false
-   * @since 0.2.5
-   */
-  upload?: boolean;
-
-  /**
-   * @description 是否文件下载 blob(responseType = 'blob')
-   * @since 0.2.5
-   * @default false
-   */
-  download?: boolean;
 }
 
 export type BodyData =
@@ -144,12 +123,6 @@ export interface HttpClientCommonOptions {
   token?: TokenOptions;
 
   /**
-   * 数据格式化处理
-   * @deprecated use dataConversion instead
-   */
-  resultFormat?: DataConversion;
-
-  /**
    * 响应数据处理
    */
   dataConversion?: DataConversion;
@@ -157,7 +130,7 @@ export interface HttpClientCommonOptions {
   /**
    * 响应实体相关字段配置
    */
-  filedInfo?: FiledInfo;
+  filedInfo?: ResultFieldInfo;
 
   /**
    * 前端定义的错误信息映射
@@ -179,7 +152,7 @@ export interface GlobalHttpClientConfiguration extends Omit<UriOptions, 'alias'>
 /**
  * 请求参数
  */
-export interface RequestOptions extends UriOptions, SimplifyOptions, HttpClientCommonOptions {
+export interface RequestOptions extends UriOptions, HttpClientCommonOptions {
   /**
    * @description 请求接口地址
    */

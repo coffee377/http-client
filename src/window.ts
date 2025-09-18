@@ -1,5 +1,6 @@
 import { TOKEN_PARAM_KEY, TOKEN_STORAGE, TOKEN_STORAGE_KEY } from './token';
 import { GlobalHttpClientConfiguration } from './config';
+import { ResultFieldInfo } from './types';
 
 export declare interface Window {
   __HTTP_CLIENT_CONFIG__: GlobalHttpClientConfiguration;
@@ -8,30 +9,21 @@ export declare interface Window {
 export const DEFAULT_HTTP_CLIENT_CONFIGURATION: GlobalHttpClientConfiguration = {
   env: 'default',
   factory: 'fetch',
-  service: {
+  services: {
     auth: 'oauth',
     base: 'basic',
     oss: 'oss',
     oneself: 'test',
   },
-  resultFormat: '$.data', // 已废弃，下个主要本部会废弃
   dataConversion: '$.data',
   filedInfo: {
-    result: {
-      success: 'success',
-      code: 'code',
-      message: 'message',
-      data: 'data',
-      total: 'total',
-    },
-    page: {
-      total: 'total',
-      count: 'count',
-      pageNum: 'pageNum',
-      pageSize: 'pageSize',
-      records: 'records',
-    },
-  },
+    success: 'success',
+    code: 'code',
+    message: 'message',
+    // data: 'data',
+    total: 'total',
+    summary: 'summary',
+  } as ResultFieldInfo,
   token: {
     multiSupport: true,
     storage: TOKEN_STORAGE,

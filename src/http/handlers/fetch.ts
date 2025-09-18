@@ -1,74 +1,290 @@
-import { HttpAdapter } from '../handler';
-import { HttpRequest } from '../request';
-import { SafeAny } from '../../types';
-import { catchError, concatMap, from, map, Observable, of, switchMap, throwError } from 'rxjs';
+import { Observable, Observer } from 'rxjs';
+
+import {
+  HttpHeaders,
+  HttpRequest,
+  HttpResponse,
+  HttpErrorResponse,
+  HttpAdapter,
+  HttpEventType,
+  HttpHeaderResponse,
+  HttpDownloadProgressEvent,
+  HttpStatusCode,
+} from '../index';
+import type { HttpHandler, HttpEvent } from '../index';
+import type { SafeAny } from '../../types';
 import { fromFetch } from 'rxjs/fetch';
-import { HttpErrorResponse, HttpEvent, HttpEventType, HttpResponse, HttpResponseOptions } from '../response';
-import { HttpContextToken } from '../../context';
-import { HttpHeaders } from '../headers';
-import { RequestOptions } from '../../config';
 
-export const FETCH_TOKEN = new HttpContextToken<Omit<RequestInit, 'method' | 'headers' | 'body' | 'signal'>>(
-  () => ({}),
-);
+const XSSI_PREFIX = /^\)\]\}',?\n/;
 
-export class FetchAdapter extends HttpAdapter {
+const REQUEST_URL_HEADER = `X-Request-URL`;
+
+/**
+ * Determine an appropriate URL for the response, by checking either
+ * response url or the X-Request-URL header.
+ */
+function getResponseUrl(response: Response): string | null {
+  if (response.url) {
+    return response.url;
+  }
+  // stored as lowercase in the map
+  const xRequestUrl = REQUEST_URL_HEADER.toLocaleLowerCase();
+  return response.headers.get(xRequestUrl);
+}
+
+/**
+ * Uses `fetch` to send requests to a backend server.
+ *
+ * This `HttpFetch` requires the support of the
+ * [Fetch API](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API) which is available on all
+ * supported browsers and on Node.js v18 or later.
+ *
+ * @see {@link HttpHandler}
+ *
+ * @publicApi
+ */
+export class HttpFetch extends HttpAdapter {
+  constructor(
+    // We use an arrow function to always reference the current global implementation of `fetch`.
+    // This is helpful for cases when the global `fetch` implementation is modified by external code,
+    // see https://github.com/angular/angular/issues/57527.
+    private fetchImpl: typeof fetch = (...args) => globalThis.fetch(...args),
+  ) {
+    super();
+  }
+
   handle(request: HttpRequest<SafeAny>): Observable<HttpEvent<SafeAny>> {
-    if (request.reportProgress) {
-      throw Error('Fetch API does not currently support report progress');
+    return new Observable((observer) => {
+      const aborter = new AbortController();
+      this.doRequest(request, aborter.signal, observer).then(noop, (error) =>
+        observer.error(new HttpErrorResponse({ error })),
+      );
+      return () => aborter.abort();
+    });
+  }
+
+  /**
+   * 发起请求
+   * @param request
+   * @param signal
+   * @param observer
+   * @private
+   */
+  private async doRequest(
+    request: HttpRequest<SafeAny>,
+    signal: AbortSignal,
+    observer: Observer<HttpEvent<SafeAny>>,
+  ): Promise<void> {
+    const init = this.createRequestInit(request);
+    let response: Response;
+
+    const responseObservable = fromFetch(request.urlWithParams);
+
+    try {
+      const fetchPromise = this.fetchImpl(request.urlWithParams, { signal, ...init });
+
+      // Make sure Zone.js doesn't trigger false-positive unhandled promise
+      // error in case the Promise is rejected synchronously. See function
+      // description for additional information.
+      silenceSuperfluousUnhandledPromiseRejection(fetchPromise);
+
+      // Send the `Sent` event before awaiting the response.
+      observer.next({ type: HttpEventType.Sent });
+
+      response = await fetchPromise;
+    } catch (error: SafeAny) {
+      observer.error(
+        new HttpErrorResponse({
+          status: error.status ?? 0,
+          statusText: error.statusText,
+          url: request.urlWithParams,
+          headers: error.headers,
+          error,
+        }),
+      );
+      return;
     }
 
-    const responseOptions: HttpResponseOptions = {};
+    const headers = new HttpHeaders(response.headers);
+    const statusText = response.statusText;
+    const url = getResponseUrl(response) ?? request.urlWithParams;
 
-    return of({ type: HttpEventType.Sent }).pipe(
-      /* 1. 发起请求 */
-      concatMap((value) =>
-        fromFetch(request.urlWithParams, {
-          method: request.method.toUpperCase() || 'GET',
-          headers: request.headers.toObject(),
-          body: request.serializeBody(),
-          ...request.context.get(FETCH_TOKEN),
-        }),
-      ),
-      /* 2. 获取响应数据 */
-      switchMap((response) => {
-        responseOptions.url = response.url;
-        responseOptions.status = response.status;
-        responseOptions.statusText = response.statusText;
-        response.headers.forEach((value, key) => {
-          if (!responseOptions.headers) {
-            responseOptions.headers = new HttpHeaders();
-          }
-          responseOptions.headers.set(key, value);
-        });
+    let status = response.status;
+    let body: string | ArrayBuffer | Blob | object | null = null;
 
-        switch (request.responseType) {
-          case 'arrayBuffer':
-            return from(response.arrayBuffer());
-          case 'blob':
-            return from(response.blob());
-          case 'json':
-            return from(response.json());
-          case 'text':
-            return from(response.text());
-        }
-      }),
-      /* 3. 响应结果封装 */
-      map((body) => new HttpResponse(body, responseOptions)),
-      /* 4. 错误处理 */
-      catchError((error) => {
-        if (error instanceof HttpErrorResponse) {
-          return throwError(() => error);
+    if (request.reportProgress) {
+      observer.next(new HttpHeaderResponse({ headers, status, statusText, url }));
+    }
+
+    if (response.body) {
+      // Read Progress
+      const contentLength = response.headers.get('content-length');
+      const totalSize = parseInt(contentLength, 10);
+
+      // response.body.pipeThrough(new ReadProgressTransformer(observer, totalSize));
+
+      const chunks: Uint8Array[] = [];
+      const reader = response.body.getReader();
+
+      let receivedLength = 0;
+
+      let decoder: TextDecoder;
+      let partialText: string | undefined;
+
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
         }
 
-        return throwError(
-          () =>
-            new HttpErrorResponse({
-              ...responseOptions,
-              error: error,
-            }),
+        chunks.push(value);
+        receivedLength += value.length;
+
+        if (request.reportProgress) {
+          partialText =
+            request.responseType === 'text'
+              ? (partialText ?? '') + (decoder ??= new TextDecoder()).decode(value, { stream: true })
+              : undefined;
+
+          observer.next({
+            type: HttpEventType.DownloadProgress,
+            total: contentLength ? +contentLength : undefined,
+            loaded: receivedLength,
+            partialText,
+          } as HttpDownloadProgressEvent);
+        }
+      }
+
+      // Combine all chunks.
+      const chunksAll = this.concatChunks(chunks, receivedLength);
+      try {
+        const contentType = response.headers.get('Content-Type') ?? '';
+        body = this.parseBody(request, chunksAll, contentType);
+      } catch (error) {
+        // Body loading or parsing failed
+        observer.error(
+          new HttpErrorResponse({
+            error,
+            headers: new HttpHeaders(response.headers),
+            status: response.status,
+            statusText: response.statusText,
+            url,
+          }),
         );
-      }),
-    );
+        return;
+      }
+    }
+
+    // Same behavior as the XhrBackend
+    if (status === 0) {
+      status = body ? HttpStatusCode.Ok : 0;
+    }
+
+    // ok determines whether the response will be transmitted on the event or
+    // error channel. Unsuccessful status codes (not 2xx) will always be errors,
+    // but a successful status code can still result in an error if the user
+    // asked for JSON data and the body cannot be parsed as such.
+    const ok = status >= 200 && status < 300;
+
+    if (ok) {
+      observer.next(
+        new HttpResponse({
+          body,
+          headers,
+          status,
+          statusText,
+          url,
+        }),
+      );
+
+      // The full body has been received and delivered, no further events
+      // are possible. This request is complete.
+      observer.complete();
+    } else {
+      observer.error(
+        new HttpErrorResponse({
+          error: body,
+          headers,
+          status,
+          statusText,
+          url,
+        }),
+      );
+    }
   }
+
+  private parseBody(
+    request: HttpRequest<SafeAny>,
+    binContent: Uint8Array,
+    contentType: string,
+  ): string | ArrayBuffer | Blob | object | null {
+    switch (request.responseType) {
+      case 'json': {
+        // stripping the XSSI when present
+        const text = new TextDecoder().decode(binContent).replace(XSSI_PREFIX, '');
+        return text === '' ? null : (JSON.parse(text) as object);
+      }
+      case 'text':
+        return new TextDecoder().decode(binContent);
+      case 'blob':
+        return new Blob([binContent], { type: contentType });
+      case 'arraybuffer':
+        return binContent.buffer;
+    }
+  }
+
+  private createRequestInit(req: HttpRequest<SafeAny>): RequestInit {
+    // We could share some of this logic with the XhrBackend
+
+    const headers: Record<string, string> = {};
+    const credentials: RequestCredentials | undefined = req.withCredentials ? 'include' : undefined;
+
+    // Setting all the requested headers.
+    req.headers.forEach((name, values) => (headers[name] = values.join(',')));
+
+    // Add an Accept header if one isn't present already.
+    if (!req.headers.has('Accept')) {
+      headers['Accept'] = 'application/json, text/plain, */*';
+    }
+
+    // Auto-detect the Content-Type header if one isn't present already.
+    if (!req.headers.has('Content-Type')) {
+      const detectedType = req.detectContentTypeHeader();
+      // Sometimes Content-Type detection fails.
+      if (detectedType !== null) {
+        headers['Content-Type'] = detectedType;
+      }
+    }
+
+    return {
+      body: req.serializeBody(),
+      method: req.method,
+      headers,
+      credentials,
+    };
+  }
+
+  private concatChunks(chunks: Uint8Array[], totalLength: number): Uint8Array {
+    const chunksAll = new Uint8Array(totalLength);
+    let position = 0;
+    for (const chunk of chunks) {
+      chunksAll.set(chunk, position);
+      position += chunk.length;
+    }
+
+    return chunksAll;
+  }
+}
+
+const noop = () => {};
+
+/**
+ * Zone.js treats a rejected promise that has not yet been awaited
+ * as an unhandled error. This function adds a noop `.then` to make
+ * sure that Zone.js doesn't throw an error if the Promise is rejected
+ * synchronously.
+ */
+function silenceSuperfluousUnhandledPromiseRejection(promise: Promise<unknown>) {
+  promise.then(noop, noop);
 }

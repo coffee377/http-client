@@ -1,7 +1,7 @@
 import { AsArray, AsyncSeriesWaterfallHook } from 'tapable';
 import { SafeAny } from '../types';
 import { merge } from 'lodash-es';
-import { HttpParams } from '../http/params';
+import { HttpParams } from '../http';
 import { HttpClientOptions } from '../config';
 
 class HeaderHook extends AsyncSeriesWaterfallHook<[Record<string, string>, HttpClientOptions]> {
@@ -12,7 +12,6 @@ class HeaderHook extends AsyncSeriesWaterfallHook<[Record<string, string>, HttpC
      * 自动侦测 Content-Type
      */
     this.tap({ name: 'detect-content-type', stage: -10000 }, (rawHeaders, opts) => {
-      // if (opts.mock) opts.env = 'mock';
       const { headers, data } = opts;
       const contentType = HeaderHook.detectContentTypeHeader(data);
       return merge({}, rawHeaders, contentType ? { 'Content-Type': contentType } : {}, headers);
