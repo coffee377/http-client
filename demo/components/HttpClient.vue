@@ -35,10 +35,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
-import GitHubUser from '@@/demo/components/GitHubUser.vue';
+import GitHubUser from "@@/demo/components/GitHubUser.vue";
+import { ref } from "vue";
 
-const activeKey = ref<string[]>(['http-client']);
+const activeKey = ref<string[]>(["http-client"]);
 </script>
 
 <style scoped></style>
