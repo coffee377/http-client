@@ -141,7 +141,9 @@ export interface HttpClientCommonOptions {
 /**
  * 全局配置
  */
-export interface GlobalHttpClientConfiguration extends Omit<UriOptions, 'alias'>, HttpClientCommonOptions {
+export interface GlobalHttpClientConfiguration
+  extends Omit<UriOptions, 'paths' | 'pathsReplace' | 'params' | 'alias'>,
+    HttpClientCommonOptions {
   /**
    * @description 接口是否代理到本地，配合接口代理(如 nginx)进行处理
    * @default false

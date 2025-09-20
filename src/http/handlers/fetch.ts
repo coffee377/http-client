@@ -193,47 +193,23 @@ export class HttpFetch extends HttpAdapter {
       // 4. 管道链：响应流 → 进度跟踪转换流 → 可写流
       const readableStream = await response.body.pipeThrough(progressTransformer);
 
-      // const chunks: Uint8Array[] = [];
-      // const reader = response.body.getReader();
-      //
-      // let receivedLength = 0;
-      //
-      // let decoder: TextDecoder;
-      // let partialText: string | undefined;
-      //
-      // while (true) {
-      //   const { done, value } = await reader.read();
-      //
-      //   if (done) {
-      //     break;
-      //   }
-      //
-      //   chunks.push(value);
-      //   receivedLength += value.length;
-      //
-      //   if (request.reportProgress) {
-      //     partialText =
-      //       request.responseType === 'text'
-      //         ? (partialText ?? '') + (decoder ??= new TextDecoder()).decode(value, { stream: true })
-      //         : undefined;
-      //
-      //     observer.next({
-      //       type: HttpEventType.DownloadProgress,
-      //       total: contentLength ? +contentLength : undefined,
-      //       loaded: receivedLength,
-      //       partialText,
-      //     } as HttpDownloadProgressEvent);
-      //   }
-      // }
-
-      // Combine all chunks.
-      //  chunksAll = this.concatChunks(chunks, receivedLength);
       try {
         const res = new Response(readableStream, {});
-        // console.log(json);
-        // const contentType = response.headers.get('Content-Type') ?? '';
-        // body = this.parseBody(request, chunksAll, contentType);
-        body = await res.json();
+        const { responseType } = request;
+        console.log(responseType);
+        switch (responseType) {
+          case 'text':
+            body = await res.text();
+            break;
+          case 'blob':
+            body = await res.blob();
+            break;
+          case 'arrayBuffer':
+            body = await res.arrayBuffer();
+            break;
+          default:
+            body = (await res.json()) as Promise<object>;
+        }
       } catch (error) {
         // Body loading or parsing failed
         observer.error(
@@ -284,26 +260,6 @@ export class HttpFetch extends HttpAdapter {
           url,
         }),
       );
-    }
-  }
-
-  private parseBody(
-    request: HttpRequest<SafeAny>,
-    binContent: Uint8Array,
-    contentType: string,
-  ): string | ArrayBuffer | Blob | object | null {
-    switch (request.responseType) {
-      case 'json': {
-        // stripping the XSSI when present
-        const text = new TextDecoder().decode(binContent).replace(XSSI_PREFIX, '');
-        return text === '' ? null : (JSON.parse(text) as object);
-      }
-      case 'text':
-        return new TextDecoder().decode(binContent);
-      // case 'blob':
-      //   return new Blob([binContent], { type: contentType });
-      // case 'arraybuffer':
-      //   return binContent.buffer;
     }
   }
 

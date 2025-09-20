@@ -3,8 +3,25 @@ import Vue from '@vitejs/plugin-vue';
 import tailwindcss from '@tailwindcss/vite';
 import Components from 'unplugin-vue-components/vite';
 import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
+import { resolve, sep } from 'path';
+
+const pathResolve = (find: string, dir?: string) => {
+  return resolve(process.cwd(), ...Array.from(dir ? [dir] : [])) + sep;
+};
 
 export default defineConfig({
+  resolve: {
+    alias: [
+      {
+        find: /@@\//,
+        replacement: pathResolve(__dirname),
+      },
+      {
+        find: /@\//,
+        replacement: pathResolve(__dirname, 'src'),
+      },
+    ],
+  },
   plugins: [
     tailwindcss(),
     Vue(),
@@ -16,10 +33,17 @@ export default defineConfig({
       ],
     }),
   ],
+
   server: {
     host: true,
     // open: true,
-    proxy: {},
+    proxy: {
+      '/api/oss': {
+        target: 'http://localhost:9001',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/api\/oss/, '/api'),
+      },
+    },
   },
   build: {
     // lib: {

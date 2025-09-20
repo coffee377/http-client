@@ -12,19 +12,19 @@ import { concatMap, filter, firstValueFrom, lastValueFrom, map, Observable, of }
 import { SafeAny } from './types';
 
 export class HttpClient {
+  public readonly version: string = VERSION;
+
   /***
    * 默认配置（全局配置）
    * @protected
    */
-  defaultConfig: GlobalHttpClientConfiguration;
+  public defaults: GlobalHttpClientConfiguration;
 
   /**
    * 实列配置
    * @protected
    */
   instanceConfig: HttpClientOptions;
-
-  version: string = VERSION;
 
   hooks: {
     opts: OptsHook;
@@ -39,7 +39,7 @@ export class HttpClient {
   private handlers: Map<string, HttpAdapter> = new Map();
 
   constructor(instanceConfig: HttpClientOptions = {}) {
-    this.defaultConfig = DEFAULT_HTTP_CLIENT_CONFIGURATION;
+    this.defaults = DEFAULT_HTTP_CLIENT_CONFIGURATION;
     this.instanceConfig = instanceConfig;
     this.hooks = {
       opts: new OptsHook(),
@@ -57,32 +57,6 @@ export class HttpClient {
       // );
     } else {
       // this.handler = backend;
-    }
-  }
-
-  request1<R>(request: HttpRequest<SafeAny>, options?: { observe?: 'body' }): Observable<R>;
-  request1<R>(request: HttpRequest<SafeAny>, options?: { observe?: 'events' }): Observable<HttpEvent<R>>;
-  request1<R>(request: HttpRequest<SafeAny>, options?: { observe?: 'response' }): Observable<HttpResponse<R>>;
-  request1<R>(
-    request: HttpRequest<SafeAny>,
-    options?: { observe?: 'body' | 'events' | 'response' },
-  ): Observable<R | HttpEvent<R> | HttpResponse<R>>;
-  request1(
-    request: HttpRequest<SafeAny>,
-    options: { observe?: 'body' | 'events' | 'response' } = {},
-  ): Observable<SafeAny> {
-    const events$ = of(request).pipe(concatMap((req: HttpRequest<unknown>) => this.handler.handle(req)));
-    const res$ = events$.pipe(filter((event: HttpEvent<unknown>) => event instanceof HttpResponse)) as Observable<
-      HttpResponse<unknown>
-    >;
-
-    switch (options.observe) {
-      case 'events':
-        return events$;
-      case 'response':
-        return res$;
-      default:
-        return res$.pipe(map((response) => response.body));
     }
   }
 
@@ -225,7 +199,7 @@ export class HttpClient {
 
     const result: HttpClientOptions = mergeWith(
       {},
-      this.defaultConfig,
+      this.defaults,
       window['__HTTP_CLIENT_CONFIG__'], // 配置文件
       this.instanceConfig,
       options,

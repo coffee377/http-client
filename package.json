@@ -54,7 +54,8 @@
     "typescript": "^5.9.2",
     "unplugin-vue-components": "^29.0.0",
     "vite": "^7.1.5",
-    "vue": "^3.5.21"
+    "vue": "^3.5.21",
+    "vue-request": "^2.0.4"
   },
   "dependencies": {
     "jsonpath-plus": "^10.3.0",
@@ -65,5 +66,5 @@
   "peerDependencies": {
     "rxjs": "^7.8.1"
   },
-  "packageManager": "pnpm@9.15.4+sha512.b2dc20e2fc72b3e18848459b37359a32064663e5627a51e4c74b2c29dd8e8e0491483c3abb40789cfd578bf362fb6ba8261b05f0387d76792ed6e23ea3b1b6a0"
+  "packageManager": "pnpm@10.17.0"
 }

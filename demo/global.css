@@ -1,1 +1,31 @@
 @import "tailwindcss";
+
+@theme {
+    --color-primary: #007bff;
+    --color-secondary: #64748b;
+    --color-dark: #0f172a;
+    --color-light: #f8fafc;
+
+    --font-sans: 'Inter', 'system-ui', 'sans-serif';
+}
+
+@layer components {
+
+}
+
+@utility card-shadow {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+@layer utilities {
+    .stat-card {
+        @apply bg-white rounded-xl p-5 card-shadow transition-all duration-300 hover:shadow-lg hover:-translate-y-1;
+    }
+    .info-item {
+        @apply flex items-start gap-3 py-3 border-b border-gray-100 last:border-0;
+    }
+    .badge {
+        @apply px-2 py-1 text-xs font-semibold rounded-full;
+    }
+}
+
