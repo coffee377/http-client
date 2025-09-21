@@ -1,15 +1,25 @@
-import { SyncWaterfallHook } from 'tapable';
-import { HttpClientOptions } from '../config';
-import { HttpMethod } from '../http';
+import { BodyData, RequestOptions } from "@/config";
+import { SyncWaterfallHook } from "tapable";
 
-class OptsHook extends SyncWaterfallHook<[HttpClientOptions]> {
+class OptsHook extends SyncWaterfallHook<[RequestOptions]> {
   constructor(name?: string) {
-    super(['HttpClientOptions'] as any, name);
+    super(["RequestOptions"] as any, name);
 
-    this.tap({ name: 'method', stage: 10000 }, (opts) => {
-      opts.method = (opts?.method ?? 'GET').toUpperCase() as HttpMethod;
+    this.tap({ name: "serialize-data", stage: 10000 }, (opts) => {
+      const { data } = opts;
+      const serializeData = OptsHook.serializeData(data);
+      if (serializeData) {
+        opts.data = serializeData;
+      }
       return opts;
     });
+  }
+
+  /**
+   * Transform the free-form body into a serialized format suitable for transmission to the server.
+   */
+  private static serializeData(data: BodyData): ArrayBuffer | Blob | FormData | URLSearchParams | string | null {
+    return null;
   }
 }
 

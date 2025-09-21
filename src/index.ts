@@ -1,6 +1,6 @@
-import { VERSION } from './data';
-import { HttpClient } from './client';
-import { HttpClientOptions } from './config';
+import { HttpClientOptions } from "./config";
+import { HttpClient } from "./client";
+import { VERSION } from "./data";
 
 class HttpClientStatic {
   private static client: HttpClient = HttpClientStatic.create();

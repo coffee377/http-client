@@ -1,5 +1,5 @@
-import http from '@@/src';
-import { QueryResult, useRequest } from 'vue-request';
+import { QueryResult, useRequest } from "vue-request";
+import http from "@@/src";
 
 // TypeScript类型定义 - GitHub用户数据
 interface GitHubPlan {
@@ -32,11 +32,11 @@ interface GitHubUser {
   name?: string;
   company?: string;
   blog?: string;
-  location?: string ;
+  location?: string;
   email?: string;
   hireable?: boolean;
-  bio?: string ;
-  twitter_username?: string ;
+  bio?: string;
+  twitter_username?: string;
   public_repos: number;
   public_gists: number;
   followers: number;
@@ -52,22 +52,18 @@ interface GitHubUser {
   plan: GitHubPlan;
 }
 
-const getGitHubUserInfo = async (username: string) => {
-  const res = await http.get('/api/users/{username}', {
+const getGitHubUserInfo = (username: string) => {
+  return http.get<GitHubUser>("/api/users/{username}", {
     headers: {
-      Accept: 'application/vnd.github.v3+json',
-      Authorization: 'Bearer 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',
+      Accept: "application/vnd.github.v3+json",
+      Authorization: "Bearer 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",
     },
-    alias: 'oneself',
+    alias: "oneself",
     paths: { username },
   });
-
-  console.log(res);
-
-  return res;
 };
 
-export function useGitHubUser(username: string = 'coffee377'): QueryResult<GitHubUser, [string]> {
+export function useGitHubUser(username: string = "coffee377"): QueryResult<GitHubUser, [string]> {
   return useRequest<GitHubUser, [string]>(getGitHubUserInfo, {
     defaultParams: [username],
   });

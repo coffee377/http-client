@@ -1,15 +1,13 @@
-import { DEFAULT_HTTP_CLIENT_CONFIGURATION } from './window';
-import { VERSION } from './data';
-import { HeaderHook, OptsHook, UriHook } from './hooks';
-import { merge, mergeWith } from 'lodash-es';
-import { HttpAdapter, HttpEvent } from './http';
-import { HttpInterceptor } from './http/interceptor';
-import { HttpFetch } from './http/handlers';
-import { HttpRequest } from './http';
-import { HttpResponse } from './http';
-import { GlobalHttpClientConfiguration, HttpClientOptions } from './config';
-import { concatMap, filter, firstValueFrom, lastValueFrom, map, Observable, of } from 'rxjs';
-import { SafeAny } from './types';
+import { concatMap, filter, firstValueFrom, lastValueFrom, map, Observable, of } from "rxjs";
+import { GlobalHttpClientConfiguration, HttpClientOptions } from "./config";
+import { DEFAULT_HTTP_CLIENT_CONFIGURATION } from "./window";
+import { HeaderHook, OptsHook, UriHook } from "./hooks";
+import { FetchRequestExecutor } from "@/http/executor";
+import { HttpInterceptor } from "./http/interceptor";
+import { HttpAdapter, HttpEvent } from "./http";
+import { merge, mergeWith } from "lodash-es";
+import { HttpFetch } from "./http/handlers";
+import { VERSION } from "./data";
 
 export class HttpClient {
   public readonly version: string = VERSION;
@@ -46,9 +44,9 @@ export class HttpClient {
       header: new HeaderHook(),
       url: new UriHook(),
     };
-    this.handlers.set('fetch', new HttpFetch());
+    this.handlers.set("fetch", new HttpFetch());
     // this.handlers.set('xhr', new HttpXhrAdapter());
-    this.handler = this.handlers.get('fetch');
+    this.handler = this.handlers.get("fetch");
 
     if (this.interceptors) {
       // this.handler = this.interceptors.reduceRight(
@@ -63,50 +61,61 @@ export class HttpClient {
   request<R = any>(url: string): Promise<R>;
   request<R = any>(options: HttpClientOptions): Promise<R>;
   request<R = any>(url: string, options: HttpClientOptions): Promise<R>;
-  async request<R = any>(urlOrOptions: string | HttpClientOptions, options?: HttpClientOptions): Promise<R> {
+  request<R = any>(urlOrOptions: string | HttpClientOptions, options?: HttpClientOptions): Promise<R> {
     const transform: HttpClientOptions = this.transformHttpClientOptions(urlOrOptions, options);
 
-    /* 1. opts hook */
-    const opts = this.hooks.opts.call(transform);
+    const fetchExecutor = new FetchRequestExecutor();
 
-    /* 获取当前请求的 handler */
-    if (typeof opts.factory === 'string') {
-      this.handler = this.handlers.get(opts.factory);
-    } else if (opts.factory) {
-      this.handler = opts.factory;
-    }
+    const { url: finalUrl, method, ...rest } = transform;
+    const observable = fetchExecutor.execute(method, finalUrl, rest);
+    // const subscription = observable.subscribe((res) => {
+    //   console.log(res);
+    // });
+    // subscription.unsubscribe();
 
-    /* 2. headers hook */
-    const headers = await this.hooks.header.promise({}, opts);
+    return lastValueFrom(observable);
 
-    /* 3. uri hook */
-    const url = await this.hooks.url.promise(opts.url, opts);
-
-    const req = new HttpRequest(opts.method, url, {
-      body: opts.data,
-      params: {},
-      headers,
-      responseType: opts.responseType,
-      // reportProgress: !!opts.download || !!opts.upload,
-      withCredentials: !!opts.withCredentials,
-    });
-
-    const events$ = of(req).pipe(concatMap((req: HttpRequest<SafeAny>) => this.handler.handle(req)));
-    const res$ = events$.pipe(filter((event: HttpEvent<SafeAny>) => event instanceof HttpResponse)) as Observable<
-      HttpResponse<SafeAny>
-    >;
-
-    // opts.observe = 'response';
-
-    switch (opts['observe']) {
-      case 'events':
-        return (await firstValueFrom(events$)) as any;
-      case 'response':
-        return (await firstValueFrom(res$)) as any;
-      default:
-        const data$ = res$.pipe(map((response) => response.body));
-        return (await firstValueFrom(data$)) as any;
-    }
+    // /* 1. opts hook */
+    // const opts = this.hooks.opts.call(transform);
+    //
+    // /* 获取当前请求的 handler */
+    // if (typeof opts.factory === "string") {
+    //   this.handler = this.handlers.get(opts.factory);
+    // } else if (opts.factory) {
+    //   this.handler = opts.factory;
+    // }
+    //
+    // /* 2. headers hook */
+    // const headers = await this.hooks.header.promise({}, opts);
+    //
+    // /* 3. uri hook */
+    // const url = await this.hooks.url.promise(opts.url, opts);
+    //
+    // const req = new HttpRequest(opts.method, url, {
+    //   body: opts.data,
+    //   params: {},
+    //   headers,
+    //   responseType: opts.responseType,
+    //   // reportProgress: !!opts.download || !!opts.upload,
+    //   withCredentials: !!opts.withCredentials,
+    // });
+    //
+    // const events$ = of(req).pipe(concatMap((req: HttpRequest<SafeAny>) => this.handler.handle(req)));
+    // const res$ = events$.pipe(filter((event: HttpEvent<SafeAny>) => event instanceof HttpResponse)) as Observable<
+    //   HttpResponse<SafeAny>
+    // >;
+    //
+    // // opts.observe = 'response';
+    //
+    // switch (opts["observe"]) {
+    //   case "events":
+    //     return (await firstValueFrom(events$)) as any;
+    //   case "response":
+    //     return (await firstValueFrom(res$)) as any;
+    //   default:
+    //     const data$ = res$.pipe(map((response) => response.body));
+    //     return (await firstValueFrom(data$)) as any;
+    // }
 
     // const res = (await this.handler.promise(req)) as HttpResponse<any>;
     // // console.log(res);
@@ -129,35 +138,35 @@ export class HttpClient {
   get<R = any>(opts: HttpClientOptions): Promise<R>;
   get<R = any>(url: string, opts: HttpClientOptions): Promise<R>;
   get<R = any>(urlOrOptions: string | HttpClientOptions, opts?: HttpClientOptions): Promise<R> {
-    return this.request(urlOrOptions as any, { ...opts, method: 'GET' });
+    return this.request(urlOrOptions as any, { ...opts, method: "GET" });
   }
 
   post<R = any>(url: string): Promise<R>;
   post<R = any>(opts: HttpClientOptions): Promise<R>;
   post<R = any>(url: string, opts: HttpClientOptions): Promise<R>;
   post<R = any>(urlOrOptions: string | HttpClientOptions, opts?: HttpClientOptions): Promise<R> {
-    return this.request(urlOrOptions as any, { ...opts, method: 'POST' });
+    return this.request(urlOrOptions as any, { ...opts, method: "POST" });
   }
 
   put<R = any>(url: string): Promise<R>;
   put<R = any>(opts: HttpClientOptions): Promise<R>;
   put<R = any>(url: string, opts: HttpClientOptions): Promise<R>;
   put<R = any>(urlOrOptions: string | HttpClientOptions, opts?: HttpClientOptions): Promise<R> {
-    return this.request(urlOrOptions as any, { ...opts, method: 'PUT' });
+    return this.request(urlOrOptions as any, { ...opts, method: "PUT" });
   }
 
   delete<R = any>(url: string): Promise<R>;
   delete<R = any>(opts: HttpClientOptions): Promise<R>;
   delete<R = any>(url: string, opts: HttpClientOptions): Promise<R>;
   delete<R = any>(urlOrOptions: string | HttpClientOptions, opts?: HttpClientOptions): Promise<R> {
-    return this.request(urlOrOptions as any, { ...opts, method: 'DELETE' });
+    return this.request(urlOrOptions as any, { ...opts, method: "DELETE" });
   }
 
   options<R = any>(url: string): Promise<R>;
   options<R = any>(opts: HttpClientOptions): Promise<R>;
   options<R = any>(url: string, opts: HttpClientOptions): Promise<R>;
   options<R = any>(urlOrOptions: string | HttpClientOptions, opts?: HttpClientOptions): Promise<R> {
-    return this.request(urlOrOptions as any, { ...opts, method: 'OPTIONS' });
+    return this.request(urlOrOptions as any, { ...opts, method: "OPTIONS" });
   }
 
   /**
@@ -166,7 +175,7 @@ export class HttpClient {
    * @param options
    */
   private transformHttpClientOptions = (urlOrOptions: string | HttpClientOptions, options: HttpClientOptions = {}) => {
-    if (typeof urlOrOptions === 'string') {
+    if (typeof urlOrOptions === "string") {
       // options = options || {};
       options.url = urlOrOptions;
     } else {
@@ -183,16 +192,16 @@ export class HttpClient {
      * @param stack
      */
     const clientOptionsMerge = (objValue: any, srcValue: any, key: string, object: object, source: object, stack) => {
-      if (key === 'prefix') {
-        if (typeof objValue === 'string') {
+      if (key === "prefix") {
+        if (typeof objValue === "string") {
           objValue = { default: objValue };
         }
-        if (typeof srcValue === 'string') {
+        if (typeof srcValue === "string") {
           srcValue = { default: srcValue };
         }
         return merge({}, objValue, srcValue);
       }
-      if (key === 'env') {
+      if (key === "env") {
         return srcValue || objValue;
       }
     };
@@ -200,7 +209,7 @@ export class HttpClient {
     const result: HttpClientOptions = mergeWith(
       {},
       this.defaults,
-      window['__HTTP_CLIENT_CONFIG__'], // 配置文件
+      window["__HTTP_CLIENT_CONFIG__"], // 配置文件
       this.instanceConfig,
       options,
       clientOptionsMerge,

@@ -1,20 +1,23 @@
-import { AsArray, AsyncSeriesWaterfallHook } from 'tapable';
-import { SafeAny } from '../types';
-import { merge } from 'lodash-es';
-import { HttpParams } from '../http';
-import { HttpClientOptions } from '../config';
+import { AsArray, SyncWaterfallHook } from "tapable";
+import { RequestOptions } from "@/config";
+import { HttpParams } from "@/http";
+import { merge } from "lodash-es";
+import { SafeAny } from "@/types";
 
-class HeaderHook extends AsyncSeriesWaterfallHook<[Record<string, string>, HttpClientOptions]> {
-  constructor(name: string = 'HeaderHook') {
-    super(['headers', 'options'] as AsArray<any>, name);
+class HeaderHook extends SyncWaterfallHook<[Record<string, string>, RequestOptions]> {
+  constructor(name: string = "HeaderHook") {
+    super(["headers", "options"] as AsArray<any>, name);
 
     /**
      * 自动侦测 Content-Type
      */
-    this.tap({ name: 'detect-content-type', stage: -10000 }, (rawHeaders, opts) => {
+    this.tap({ name: "detect-content-type", stage: -10000 }, (rawHeaders, opts) => {
       const { headers, data } = opts;
       const contentType = HeaderHook.detectContentTypeHeader(data);
-      return merge({}, rawHeaders, contentType ? { 'Content-Type': contentType } : {}, headers);
+      // if (!headers.has("Accept")) {
+      //   headers["Accept"] = "application/json, text/plain, */*";
+      // }
+      return merge({}, rawHeaders, contentType ? { "Content-Type": contentType } : {}, headers);
     });
   }
 
@@ -35,16 +38,16 @@ class HeaderHook extends AsyncSeriesWaterfallHook<[Record<string, string>, HttpC
       return null;
     }
     // 从技术上讲，字符串可以是 JSON 数据的一种形式，但假设它们是纯字符串就足够安全了。
-    if (typeof body === 'string') {
-      return 'text/plain';
+    if (typeof body === "string") {
+      return "text/plain";
     }
     // `HttpUrlEncodedParams` 有自己的内容类型。
     if (body instanceof HttpParams) {
-      return 'application/x-www-form-urlencoded;charset=UTF-8';
+      return "application/x-www-form-urlencoded;charset=UTF-8";
     }
     // 数组、对象、布尔值和数字将被编码为 JSON。
-    if (['object', 'number', 'boolean'].includes(typeof body)) {
-      return 'application/json';
+    if (["object", "number", "boolean"].includes(typeof body)) {
+      return "application/json";
     }
 
     return null;
@@ -56,7 +59,7 @@ class HeaderHook extends AsyncSeriesWaterfallHook<[Record<string, string>, HttpC
  * In some execution environments ArrayBuffer is not defined.
  */
 function isArrayBuffer(value: SafeAny): value is ArrayBuffer {
-  return typeof ArrayBuffer !== 'undefined' && value instanceof ArrayBuffer;
+  return typeof ArrayBuffer !== "undefined" && value instanceof ArrayBuffer;
 }
 
 /**
@@ -64,7 +67,7 @@ function isArrayBuffer(value: SafeAny): value is ArrayBuffer {
  * In some execution environments Blob is not defined.
  */
 function isBlob(value: SafeAny): value is Blob {
-  return typeof Blob !== 'undefined' && value instanceof Blob;
+  return typeof Blob !== "undefined" && value instanceof Blob;
 }
 
 /**
@@ -72,7 +75,7 @@ function isBlob(value: SafeAny): value is Blob {
  * In some execution environments FormData is not defined.
  */
 function isFormData(value: SafeAny): value is FormData {
-  return typeof FormData !== 'undefined' && value instanceof FormData;
+  return typeof FormData !== "undefined" && value instanceof FormData;
 }
 
 export default HeaderHook;

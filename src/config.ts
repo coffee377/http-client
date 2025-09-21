@@ -1,8 +1,9 @@
-import { HttpAdapter, HttpHandler } from './http';
-import { ParameterValue, Property, ResultFieldInfo } from './types';
-import { HttpMethod } from './http';
-import { TokenOptions } from './token';
-import { DataConversion } from './data';
+import { ParameterValue, Property, ResultFieldInfo } from "./types";
+import { RequestExecutor } from "@/http/executor";
+import { HttpAdapter, HttpHandler } from "./http";
+import { DataConversion } from "./data";
+import { TokenOptions } from "./token";
+import { HttpMethod } from "./http";
 
 export interface EnvPrefix {
   dev?: string;
@@ -13,7 +14,7 @@ export interface EnvPrefix {
   [key: string]: string;
 }
 
-export type Env = 'default' | keyof EnvPrefix;
+export type Env = "default" | keyof EnvPrefix;
 
 export interface PrefixOptions {
   /**
@@ -90,18 +91,9 @@ export interface UriOptions<M extends MicroService = MicroService> extends Prefi
   paramsSerializer?: (params: Record<string, ParameterValue>) => string;
 }
 
-export type BodyData =
-  | string
-  | Property
-  | ArrayBuffer
-  | ArrayBufferView
-  | FormData
-  | File
-  | Blob
-  | URLSearchParams
-  | any;
+export type BodyData = string | Property | ArrayBuffer | ArrayBufferView | FormData | File | Blob | URLSearchParams;
 
-export type ResponseType = 'json' | 'text' | 'blob' | 'arrayBuffer';
+export type ResponseType = "json" | "text" | "blob" | "arrayBuffer" | "bytes";
 
 /**
  * 通用配置选项
@@ -110,7 +102,7 @@ export interface HttpClientCommonOptions {
   /**
    * HTTP 处理器
    */
-  factory?: 'fetch' | 'xhr' | HttpHandler;
+  factory?: "fetch" | "xhr" | HttpHandler;
 
   /**
    * 请求头配置
@@ -142,7 +134,7 @@ export interface HttpClientCommonOptions {
  * 全局配置
  */
 export interface GlobalHttpClientConfiguration
-  extends Omit<UriOptions, 'paths' | 'pathsReplace' | 'params' | 'alias'>,
+  extends Omit<UriOptions, "paths" | "pathsReplace" | "params" | "alias">,
     HttpClientCommonOptions {
   /**
    * @description 接口是否代理到本地，配合接口代理(如 nginx)进行处理
@@ -154,22 +146,12 @@ export interface GlobalHttpClientConfiguration
 /**
  * 请求参数
  */
-export interface RequestOptions extends UriOptions, HttpClientCommonOptions {
-  /**
-   * @description 请求接口地址
-   */
-  url?: string;
-
+export interface RequestOptions<M extends MicroService = MicroService> extends UriOptions<M>, HttpClientCommonOptions {
   /**
    * HTTP 处理器
    */
-  factory?: 'fetch' | 'xhr' | HttpAdapter;
-
-  /**
-   * @description 请求方法
-   * @default GET
-   */
-  method?: HttpMethod;
+  factory?: "fetch" | "xhr" | HttpAdapter;
+  executor?: "fetch" | "xhr" | RequestExecutor;
 
   /**
    * 请求头
@@ -200,12 +182,6 @@ export interface RequestOptions extends UriOptions, HttpClientCommonOptions {
    * 是否携带 cookie
    */
   withCredentials?: boolean;
-
-  // 'credentials' indicates whether the user agent should send cookies from the other domain in the case of cross-origin requests.
-  // omit: Never send or receive cookies.
-  // same-origin: Send user credentials (cookies, basic http auth, etc..) if the URL is on the same origin as the calling script. This is the default value.
-  // include: Always send user credentials (cookies, basic http auth, etc..), even for cross-origin calls.
-  // credentials?: 'omit' | 'same-origin' | 'include'; // default
 }
 
 export interface HttpClientOptions extends RequestOptions {
@@ -213,4 +189,9 @@ export interface HttpClientOptions extends RequestOptions {
    * @description 请求接口地址
    */
   url?: string;
+  /**
+   * @description 请求方法
+   * @default GET
+   */
+  method?: HttpMethod;
 }

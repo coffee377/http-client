@@ -1,5 +1,3 @@
-import { HttpClientOptions } from './config';
-
 /**
  * 响应结果配置
  */
@@ -30,26 +28,6 @@ export interface ResultFieldInfo {
   summary?: string;
 }
 
-export type UrlRewrite<Context extends HttpClientOptions> = (
-  url: string,
-  context: Context,
-  defaultRewrite?: UrlRewrite<Omit<Context, 'rewrite'>>,
-) => string;
-
-// export const COMMON_KEYS = [
-//   'factory',
-//   'env',
-//   'prefix',
-//   'microService',
-//   'headers',
-//   'token',
-//   'resultFormat',
-//   'filedInfo',
-// ];
-
-// export const HTTP_CLIENT_KEYS = ['url', 'microPrefix', 'micro', 'upload', 'download', 'mock', ...COMMON_KEYS];
-
-// -------------------------------------------
 export type SafeAny = any;
 
 /*  Any Object */

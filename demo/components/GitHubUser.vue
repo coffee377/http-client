@@ -239,7 +239,7 @@
                 <div class="mt-1 flex justify-between text-xs text-gray-500">
                   <span>0 GB</span>
                   <span>{{ data.disk_usage }} used</span>
-                  <span>{{ data.plan.space }} total</span>
+                  <span>{{ data.plan?.space }} total</span>
                 </div>
               </div>
             </div>
@@ -249,29 +249,29 @@
                 <i class="fa fa-credit-card text-primary"></i> Plan Information
               </h3>
               <div class="mb-4 flex items-center gap-3">
-                <span class="badge bg-green-100 text-green-800 capitalize">{{ data.plan.name }} Plan</span>
+                <span class="badge bg-green-100 text-green-800 capitalize">{{ data.plan?.name }} Plan</span>
                 <span class="text-gray-500">GitHub's free tier account</span>
               </div>
 
               <div class="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div class="rounded-lg border border-gray-100 p-4">
                   <p class="mb-1 text-sm text-gray-500">Storage Space</p>
-                  <p class="text-lg font-bold">{{ data.plan.space }}</p>
+                  <p class="text-lg font-bold">{{ data.plan?.space }}</p>
                 </div>
 
                 <div class="rounded-lg border border-gray-100 p-4">
                   <p class="mb-1 text-sm text-gray-500">Collaborators</p>
-                  <p class="text-lg font-bold">{{ data.plan.collaborators }}</p>
+                  <p class="text-lg font-bold">{{ data.plan?.collaborators }}</p>
                 </div>
 
                 <div class="rounded-lg border border-gray-100 p-4">
                   <p class="mb-1 text-sm text-gray-500">Private Repos</p>
-                  <p class="text-lg font-bold">{{ data.plan.private_repos }}</p>
+                  <p class="text-lg font-bold">{{ data.plan?.private_repos }}</p>
                 </div>
               </div>
 
               <button
-                v-if="data.plan.name === 'free'"
+                v-if="data.plan?.name === 'free'"
                 class="mt-6 w-full rounded-lg bg-gray-100 px-4 py-2 font-medium text-gray-800 transition-colors hover:bg-gray-200"
               >
                 Upgrade to Pro
@@ -309,11 +309,9 @@ const showPersonalInformation = computed(() => {
 });
 
 const useRate = computed(() => {
-  const {
-    disk_usage,
-    plan: { space },
-  } = unref(data);
+  const { disk_usage, plan: { space } = {} } = unref(data) ?? {};
 
+  if (!disk_usage || !space) return {};
   return {
     width: `${(disk_usage / space) * 100}%`,
   };
