@@ -295,7 +295,10 @@ interface GitHubUserProps {
   token?: string;
 }
 
-const props = withDefaults(defineProps<GitHubUserProps>(), { username: "coffee377" });
+const props = withDefaults(defineProps<GitHubUserProps>(), {
+  username: "coffee377",
+  token: "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",
+});
 
 const toggleFollowing = () => (following.value = !following.value);
 

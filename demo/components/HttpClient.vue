@@ -2,15 +2,7 @@
   <div class="p-8">
     <a-collapse accordion v-model:active-key="activeKey">
       <a-collapse-panel key="http-client" header="Http Client">
-        <template #extra>
-          <a-button type="primary" @click="">查询</a-button>
-        </template>
         <GitHubUser />
-        <!--        <img v-if="result?.avatar_url" class="size-12 rounded-full" :src="result?.avatar_url" alt="" />-->
-        <!--        <a-typography-paragraph v-if="!!result" copyable>{{ result }}</a-typography-paragraph>-->
-        <!--        <a-space>-->
-        <!--          <AButton :loading="loading" type="primary" @click="handleOk">获取GitHub用户信息</AButton>-->
-        <!--        </a-space>-->
       </a-collapse-panel>
       <a-collapse-panel key="socket.io" header="Socket IO">
         <a-space>
