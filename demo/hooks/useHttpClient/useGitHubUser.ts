@@ -52,19 +52,23 @@ interface GitHubUser {
   plan: GitHubPlan;
 }
 
-const getGitHubUserInfo = (username: string) => {
+const getGitHubUserInfo = (username: string, token?: string) => {
+  const headers = {
+    Accept: "application/vnd.github.v3+json",
+  };
+  if (token) headers["Authorization"] = `Bearer ${token}`;
   return http.get<GitHubUser>("/api/users/{username}", {
-    headers: {
-      Accept: "application/vnd.github.v3+json",
-      Authorization: "Bearer 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",
-    },
+    headers,
     alias: "oneself",
     paths: { username },
   });
 };
 
-export function useGitHubUser(username: string = "coffee377"): QueryResult<GitHubUser, [string]> {
-  return useRequest<GitHubUser, [string]>(getGitHubUserInfo, {
-    defaultParams: [username],
+export function useGitHubUser(
+  username: string = "coffee377",
+  token?: string,
+): QueryResult<GitHubUser, [string, string]> {
+  return useRequest<GitHubUser, [string, string]>(getGitHubUserInfo, {
+    defaultParams: [username, token],
   });
 }

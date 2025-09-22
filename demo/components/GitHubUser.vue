@@ -292,13 +292,14 @@ const following = ref(false);
 
 interface GitHubUserProps {
   username?: string;
+  token?: string;
 }
 
 const props = withDefaults(defineProps<GitHubUserProps>(), { username: "coffee377" });
 
 const toggleFollowing = () => (following.value = !following.value);
 
-const { data, loading, error, run, refresh } = useGitHubUser(props.username);
+const { data, loading, error, run, refresh } = useGitHubUser(props.username, props.token);
 
 const createdAt = computed(() => new Date(Date.parse(data.value?.created_at)).toLocaleDateString());
 const updatedAt = computed(() => new Date(Date.parse(data.value?.updated_at)).toLocaleDateString());
