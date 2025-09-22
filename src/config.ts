@@ -1,6 +1,5 @@
 import { ParameterValue, Property, ResultFieldInfo } from "./types";
-import { RequestExecutor } from "@/http/executor";
-import { HttpAdapter, HttpHandler } from "./http";
+import { RequestExecutor } from "@/executors";
 import { DataConversion } from "./data";
 import { TokenOptions } from "./token";
 import { HttpMethod } from "./http";
@@ -100,9 +99,9 @@ export type ResponseType = "json" | "text" | "blob" | "arrayBuffer" | "bytes";
  */
 export interface HttpClientCommonOptions {
   /**
-   * HTTP 处理器
+   * HTTP 请求执行器
    */
-  factory?: "fetch" | "xhr" | HttpHandler;
+  executor?: "fetch" | "xhr" | RequestExecutor;
 
   /**
    * 请求头配置
@@ -148,9 +147,8 @@ export interface GlobalHttpClientConfiguration
  */
 export interface RequestOptions<M extends MicroService = MicroService> extends UriOptions<M>, HttpClientCommonOptions {
   /**
-   * HTTP 处理器
+   * HTTP 请求执行器
    */
-  factory?: "fetch" | "xhr" | HttpAdapter;
   executor?: "fetch" | "xhr" | RequestExecutor;
 
   /**

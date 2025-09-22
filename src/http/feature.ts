@@ -1,6 +1,5 @@
-import type { HttpHandler } from './handler';
-import { HttpInterceptor, HttpInterceptorFn } from './interceptor';
-import { Fetch, HttpXhr } from './handlers';
+import { HttpInterceptor, HttpInterceptorFn } from "./interceptor";
+import type { HttpHandler } from "./handler";
 
 export enum HttpFeatureKind {
   Backend,
@@ -15,26 +14,17 @@ export type HttpFeature =
   | { kind: HttpFeatureKind.LegacyInterceptors; value: HttpInterceptor[] }
   | { kind: HttpFeatureKind.XsrfProtection; value: HttpInterceptorFn };
 
-export function withXhr(factory?: () => XMLHttpRequest) {
-  return { kind: HttpFeatureKind.Backend, value: new HttpXhr(factory) };
-}
-
-export function withFetch(fetchImpl?: typeof fetch) {
-  return { kind: HttpFeatureKind.Backend, value: new Fetch(fetchImpl) };
-}
-
-export function withInterceptors(interceptorFns: HttpInterceptorFn[]): HttpFeature {
-  return { kind: HttpFeatureKind.Interceptors, value: interceptorFns };
-}
-
-/**
- * @deprecated
- * 遗留拦截器
- * @param interceptors
- */
-export function withLegacyInterceptors(interceptors: HttpInterceptor[]) {
-  return { kind: HttpFeatureKind.LegacyInterceptors, value: interceptors };
-}
+// export function withXhr(factory?: () => XMLHttpRequest) {
+//   return { kind: HttpFeatureKind.Backend, value: new HttpXhr(factory) };
+// }
+//
+// export function withFetch(fetchImpl?: typeof fetch) {
+//   return { kind: HttpFeatureKind.Backend, value: new Fetch(fetchImpl) };
+// }
+//
+// export function withInterceptors(interceptorFns: HttpInterceptorFn[]): HttpFeature {
+//   return { kind: HttpFeatureKind.Interceptors, value: interceptorFns };
+// }
 
 // export function withXsrfProtection(options?: {
 //   cookieName?: string;

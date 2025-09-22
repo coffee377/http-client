@@ -61,6 +61,7 @@ const getGitHubUserInfo = (username: string, token?: string) => {
     headers,
     alias: "oneself",
     paths: { username },
+    // responseType: "blob",
   });
 };
 

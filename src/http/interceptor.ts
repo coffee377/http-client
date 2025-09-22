@@ -1,37 +1,11 @@
-import { HttpRequest } from './request';
-import { SafeAny } from '../types';
-import { HttpHandler } from './handler';
-import { Observable } from 'rxjs';
-import { HttpEvent } from './response';
+import { HttpRequest } from "./request";
+import { HttpHandler } from "./handler";
+import { HttpEvent } from "./response";
+import { SafeAny } from "../types";
+import { Observable } from "rxjs";
 
 export interface HttpInterceptor {
   intercept(request: HttpRequest<SafeAny>, next: HttpHandler): Observable<HttpEvent<SafeAny>>;
-}
-
-export class HttpInterceptorHandler implements HttpHandler {
-  private chain: ChainedInterceptorFn<unknown> | null = null;
-
-  constructor(
-    private backend: HttpHandler,
-    private interceptorFns: HttpInterceptorFn[] = [],
-  ) {}
-
-  handle(request: HttpRequest<SafeAny>): Observable<HttpEvent<SafeAny>> {
-    if (this.chain === null) {
-      const interceptorFns = Array.from(new Set(this.interceptorFns));
-
-      // Note: interceptors are wrapped right-to-left so that final execution order is
-      // left-to-right. That is, if `dedupedInterceptorFns` is the array `[a, b, c]`, we want to
-      // produce a chain that is conceptually `c(b(a(end)))`, which we build from the inside
-      // out.
-      this.chain = interceptorFns.reduceRight(
-        (nextSequencedFn, interceptorFn) => chainedInterceptorFn(nextSequencedFn, interceptorFn),
-        interceptorChainEndFn as ChainedInterceptorFn<unknown>,
-      );
-    }
-
-    return this.chain(request, (downstreamRequest) => this.backend.handle(downstreamRequest));
-  }
 }
 
 export type HttpInterceptorFn = (req: HttpRequest<unknown>, next: HttpHandlerFn) => Observable<HttpEvent<unknown>>;

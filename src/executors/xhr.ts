@@ -1,20 +1,18 @@
-import { HttpAdapter } from '../handler';
-import { SafeAny } from '../../types';
-import { HttpRequest, HttpHeaders } from '../index';
-import { catchError, concatMap, map, Observable, of, switchMap, throwError } from 'rxjs';
-import { ajax, AjaxError } from 'rxjs/ajax';
-import { HttpErrorResponse, HttpEvent, HttpEventType, HttpResponse, HttpResponseOptions } from '../response';
-import { factory } from 'ts-jest/dist/transformers/hoist-jest';
+import { concatMap, map, Observable, of, switchMap, throwError } from "rxjs";
+import { ExecutorOptions, RequestExecutorAdapter } from "@/executors/types";
+import { ajax, AjaxError } from "rxjs/ajax";
+import { RequestOptions } from "@/config";
+import { HttpMethod } from "@/http";
 
-export class HttpXhr extends HttpAdapter {
-  private factory?: () => XMLHttpRequest;
+export class XhrRequestExecutor extends RequestExecutorAdapter {
+  private xhrImpl?: () => XMLHttpRequest;
 
-  constructor(factory: () => XMLHttpRequest) {
+  constructor(xhr?: () => XMLHttpRequest) {
     super();
-    this.factory = factory;
+    this.xhrImpl = xhr;
   }
 
-  handle(request: HttpRequest<SafeAny>): Observable<HttpEvent<SafeAny>> {
+  execute<T>(method: HttpMethod, url: string, options?: ExecutorOptions): Observable<T> {
     return undefined;
   }
 

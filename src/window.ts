@@ -8,7 +8,7 @@ export declare interface Window {
 
 export const DEFAULT_HTTP_CLIENT_CONFIGURATION: GlobalHttpClientConfiguration = {
   env: "default",
-  factory: "fetch",
+  executor: "fetch",
   services: {
     auth: "oauth",
     base: "basic",

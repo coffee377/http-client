@@ -1,5 +1,6 @@
 <template>
   <div v-if="data" class="min-h-screen bg-gray-50 font-sans text-gray-800">
+    <a-button type="primary" @click="handleDownload">下载</a-button>
     <main class="container mx-auto px-4 py-8">
       <div class="mx-auto max-w-5xl">
         <!-- Profile Header -->
@@ -320,6 +321,29 @@ const useRate = computed(() => {
     width: `${(disk_usage / space) * 100}%`,
   };
 });
+
+const handleDownload = async () => {
+  // 直接在用户点击事件中调用，符合安全限制
+  try {
+    const fileHandle = await window.showSaveFilePicker({
+      suggestedName: "data.txt",
+      types: [
+        {
+          description: "文本文件",
+          accept: { "text/plain": [".txt"] },
+        },
+      ],
+    });
+
+    // 后续的文件写入可以异步执行（调用API本身必须在用户手势中）
+    const writable = await fileHandle.createWritable();
+    run();
+  } catch (err) {
+    console.error("保存失败:", err);
+  }
+  // await writable.write("Hello World");
+  // await writable.close();
+};
 </script>
 
 <style scoped></style>

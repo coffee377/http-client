@@ -1,9 +1,9 @@
-import { ParameterValue } from './types';
-import { TOKEN_PARAM_KEY, TOKEN_STORAGE_KEY, TokenOptions, TokenParamKey, TokenStorageKey, TokenType } from './token';
-import { merge } from 'lodash-es';
-import { HttpClientOptions } from './config';
+import { TOKEN_PARAM_KEY, TOKEN_STORAGE_KEY, TokenOptions, TokenParamKey, TokenStorageKey, TokenType } from "./token";
+import { HttpClientOptions } from "./config";
+import { ParameterValue } from "./types";
+import { merge } from "lodash-es";
 
-export const DEPRECATED_MESSAGE = '{A} is deprecated, will remove in next. Please use {B} instead';
+export const DEPRECATED_MESSAGE = "{A} is deprecated, will remove in next. Please use {B} instead";
 
 /**
  * 废弃提示信息
@@ -12,7 +12,7 @@ export const DEPRECATED_MESSAGE = '{A} is deprecated, will remove in next. Pleas
  * @param objName 配置名称
  */
 export const deprecatedMessage = <T = string, K extends string = string>(prop: K, instead: K, objName?: T) => {
-  const obj = objName ? `${objName}.` : '';
+  const obj = objName ? `${objName}.` : "";
   return DEPRECATED_MESSAGE.replace(/\{A}(.*)\{B}(.*)/, `${obj}${prop}$1${obj}${instead}$2`);
 };
 
@@ -40,23 +40,23 @@ export const deprecated = <T extends object = object, N = string, K extends stri
  * @param type 令牌类型
  * @param opts 令牌配置
  */
-export function getToken(type: TokenType = 'access_token', opts: TokenOptions = {}): string {
-  const { multiSupport = false, storage = 'local', storageKey, accessTokenType } = opts;
+export function getToken(type: TokenType = "access_token", opts: TokenOptions = {}): string {
+  const { multiSupport = false, storage = "local", storageKey, accessTokenType } = opts;
 
   /* 废弃属性兼容处理 */
   // ------------------------------------------------------- todo remove in next
-  deprecated(opts, 'bearer', 'accessTokenType', 'TokenOptions');
-  deprecated(opts, 'prefix', 'accessTokenType', 'TokenOptions');
-  if (opts.bearer) {
-    opts.accessTokenType = 'Bearer';
-  } else if (opts.prefix) {
-    opts.accessTokenType = opts.prefix.trim();
-  }
+  deprecated(opts, "bearer", "accessTokenType", "TokenOptions");
+  deprecated(opts, "prefix", "accessTokenType", "TokenOptions");
+  // if (opts.bearer) {
+  //   opts.accessTokenType = 'Bearer';
+  // } else if (opts.prefix) {
+  //   opts.accessTokenType = opts.prefix.trim();
+  // }
   // -------------------------------------------------------
 
   /* 令牌存储的 key */
   let tokenStorageKey: TokenStorageKey = { access_token: TOKEN_STORAGE_KEY.access_token };
-  if (storageKey && typeof storageKey === 'string') {
+  if (storageKey && typeof storageKey === "string") {
     tokenStorageKey.access_token = storageKey;
   } else {
     tokenStorageKey = merge(TOKEN_STORAGE_KEY, storageKey);
@@ -64,16 +64,16 @@ export function getToken(type: TokenType = 'access_token', opts: TokenOptions = 
   const key = tokenStorageKey[type];
 
   /* 令牌存储类型 */
-  const sto = storage == 'session' ? sessionStorage : localStorage;
+  const sto = storage == "session" ? sessionStorage : localStorage;
 
   /* 获取令牌 */
-  const token = sto.getItem(key)?.replace(/["'](.*)["']/, '$1') || '';
+  const token = sto.getItem(key)?.replace(/["'](.*)["']/, "$1") || "";
   if (!!token && accessTokenType) {
     return `${accessTokenType} ${token}`;
   } else if (!!token) {
     return token;
   }
-  return '';
+  return "";
 }
 
 /**
@@ -81,7 +81,7 @@ export function getToken(type: TokenType = 'access_token', opts: TokenOptions = 
  * @param type 令牌类型
  * @param opts 令牌配置
  */
-export function getTokenParamKey(type: TokenType = 'access_token', opts: TokenOptions = {}): string {
+export function getTokenParamKey(type: TokenType = "access_token", opts: TokenOptions = {}): string {
   const result: TokenParamKey = merge(TOKEN_PARAM_KEY, opts.paramKey ?? {});
   return result[type];
 }
@@ -98,7 +98,7 @@ export function slash(path: string) {
     return path;
   }
 
-  return path.replace(/\\/g, '/');
+  return path.replace(/\\/g, "/");
 }
 
 /**
@@ -106,7 +106,7 @@ export function slash(path: string) {
  * @param path
  */
 export function slashTrim(path: string) {
-  return slash(path).replace(/(^\/)|(\/$)/g, '');
+  return slash(path).replace(/(^\/)|(\/$)/g, "");
 }
 
 /**
@@ -117,13 +117,13 @@ export function urlPathJoin(path?: string | string[]) {
   if (!path) return undefined;
   /* 前缀数组 */
   const arr: string[] = [];
-  if (typeof path === 'string') {
+  if (typeof path === "string") {
     arr.push(slashTrim(path));
   } else {
     const paths: string[] = path.map(slashTrim);
     arr.push(...paths);
   }
-  const result = arr.filter((p) => !!p).join('/');
+  const result = arr.filter((p) => !!p).join("/");
   return `${result}`;
 }
 
@@ -136,13 +136,13 @@ export function urlPathJoin(path?: string | string[]) {
 export function trimPrefixUrl(prefix: RegExp, url: string, micro?: string | string[]) {
   const arr: string[] = [];
   /* 微服务前缀 */
-  if (typeof micro === 'string') {
+  if (typeof micro === "string") {
     arr.push(micro);
   } else if (Array.isArray(micro)) {
     arr.push(...micro);
   }
   /* url 去除默认 /api 前缀 */
-  const trimUrl = url.replace(prefix, '$1');
+  const trimUrl = url.replace(prefix, "$1");
   arr.push(trimUrl);
   return urlPathJoin(arr);
 }
@@ -164,7 +164,7 @@ export function trimApiPrefixUrl(url: string, micro?: string | string[]) {
 export function replacePlaceholderParameters(url: string, paths: ParameterValue | Record<string, ParameterValue> = {}) {
   let pathsKV: Record<string, ParameterValue> = {};
   const pathsKey = url.match(/(?<=\/?{)(.*?)(?=}\/?)/g) ?? [];
-  if (typeof paths === 'object') {
+  if (typeof paths === "object") {
     pathsKV = paths;
   } else if (pathsKey.length === 1) {
     pathsKV[pathsKey[0]] = paths;
@@ -190,7 +190,7 @@ export function transformHttpClientOptions(url: string, opts: HttpClientOptions)
  * @param options
  */
 export function transformHttpClientOptions(urlOrOptions: string | HttpClientOptions, options: HttpClientOptions = {}) {
-  if (typeof urlOrOptions === 'string') {
+  if (typeof urlOrOptions === "string") {
     options.url = urlOrOptions;
   } else {
     options = urlOrOptions || {};
@@ -202,4 +202,4 @@ export function transformHttpClientOptions(urlOrOptions: string | HttpClientOpti
  * 参数字符串话
  * @param value
  */
-const parameterStringify = (value?: ParameterValue) => (value === null || value === undefined ? '' : `${value}`);
+const parameterStringify = (value?: ParameterValue) => (value === null || value === undefined ? "" : `${value}`);

@@ -1,7 +1,8 @@
 import { AsArray, SyncWaterfallHook } from "tapable";
+import { isBlob, isFormData } from "@/hooks/utils";
+import { isArrayBuffer, merge } from "lodash-es";
 import { RequestOptions } from "@/config";
 import { HttpParams } from "@/http";
-import { merge } from "lodash-es";
 import { SafeAny } from "@/types";
 
 class HeaderHook extends SyncWaterfallHook<[Record<string, string>, RequestOptions]> {
@@ -52,30 +53,6 @@ class HeaderHook extends SyncWaterfallHook<[Record<string, string>, RequestOptio
 
     return null;
   }
-}
-
-/**
- * Safely assert whether the given value is an ArrayBuffer.
- * In some execution environments ArrayBuffer is not defined.
- */
-function isArrayBuffer(value: SafeAny): value is ArrayBuffer {
-  return typeof ArrayBuffer !== "undefined" && value instanceof ArrayBuffer;
-}
-
-/**
- * Safely assert whether the given value is a Blob.
- * In some execution environments Blob is not defined.
- */
-function isBlob(value: SafeAny): value is Blob {
-  return typeof Blob !== "undefined" && value instanceof Blob;
-}
-
-/**
- * Safely assert whether the given value is a FormData instance.
- * In some execution environments FormData is not defined.
- */
-function isFormData(value: SafeAny): value is FormData {
-  return typeof FormData !== "undefined" && value instanceof FormData;
 }
 
 export default HeaderHook;
