@@ -13,8 +13,8 @@ import {
   timer,
 } from "rxjs";
 import { ForbiddenError, InterfaceError, InvalidTokenError, UnauthorizedError } from "@/error";
-import { HttpDownloadProgressEvent, HttpEventType, HttpMethod } from "@/http";
 import { ExecutorOptions, RequestExecutorAdapter } from "@/executors/types";
+import { HttpEventType, HttpMethod } from "@/http";
 import { RequestOptions } from "@/config";
 import { dataTransform } from "@/data";
 
@@ -45,7 +45,7 @@ export class FetchRequestExecutor extends RequestExecutorAdapter {
     return trigger$.pipe(
       throttleTime(500), // 0.5 秒内只允许1次请求
       /* 1. 发起请求 */
-      concatMap(() => this.fromFetch<T>(input, init, opts)),
+      concatMap(() => this.fromFetch(input, init, opts)),
       /* 2. 数据转换 */
       // concatMap(async (response: Response) => {
       //   const onProgress = (loaded: number, total?: number, progress?: number, partialText?: string) => {
@@ -152,7 +152,7 @@ export class FetchRequestExecutor extends RequestExecutorAdapter {
     );
   }
 
-  fromFetch<T = any>(url: string, init: RequestInit, opts: RequestOptions): Observable<Response | T> {
+  fromFetch<T = Response | any>(url: string, init: RequestInit, opts: RequestOptions): Observable<Response | T> {
     const { responseType = "json" } = opts;
     return new Observable<Response | T>((subscriber) => {
       const controller = new AbortController(); // 内部取消控制器

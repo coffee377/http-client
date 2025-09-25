@@ -33,9 +33,13 @@ export class HttpClient {
   request<R = any>(url: string, options: HttpClientOptions): Promise<R>;
   request<R = any>(urlOrOptions: string | HttpClientOptions, options?: HttpClientOptions): Promise<R> {
     const transform: HttpClientOptions = this.transformHttpClientOptions(urlOrOptions, options);
-
+    let requestExecutor: RequestExecutor;
     const { executor = "fetch" } = transform;
-    const requestExecutor = this.executors.get(executor);
+    if (typeof executor === "function") {
+      requestExecutor = executor;
+    } else if (typeof executor === "string") {
+      requestExecutor = this.executors.get(executor);
+    }
     const { url: finalUrl, method, ...rest } = transform;
 
     return requestExecutor.request<R>(method, finalUrl, rest);

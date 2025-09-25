@@ -1,9 +1,9 @@
-import { defineConfig } from 'vite';
-import Vue from '@vitejs/plugin-vue';
-import tailwindcss from '@tailwindcss/vite';
-import Components from 'unplugin-vue-components/vite';
-import { AntDesignVueResolver } from 'unplugin-vue-components/resolvers';
-import { resolve, sep } from 'path';
+import { AntDesignVueResolver } from "unplugin-vue-components/resolvers";
+import Components from "unplugin-vue-components/vite";
+import tailwindcss from "@tailwindcss/vite";
+import Vue from "@vitejs/plugin-vue";
+import { defineConfig } from "vite";
+import { resolve, sep } from "path";
 
 const pathResolve = (find: string, dir?: string) => {
   return resolve(process.cwd(), ...Array.from(dir ? [dir] : [])) + sep;
@@ -18,13 +18,20 @@ export default defineConfig({
       },
       {
         find: /@\//,
-        replacement: pathResolve(__dirname, 'src'),
+        replacement: pathResolve(__dirname, "src"),
       },
     ],
   },
   plugins: [
     tailwindcss(),
-    Vue(),
+    Vue({
+      template: {
+        compilerOptions: {
+          // 将所有以deep-开头的标签视为自定义元素
+          isCustomElement: (tag) => tag == "deep-chat",
+        },
+      },
+    }),
     Components({
       resolvers: [
         AntDesignVueResolver({
@@ -38,10 +45,10 @@ export default defineConfig({
     host: true,
     // open: true,
     proxy: {
-      '/api/oss': {
-        target: 'http://localhost:9001',
+      "/api/oss": {
+        target: "http://localhost:9001",
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/api\/oss/, '/api'),
+        rewrite: (path) => path.replace(/^\/api\/oss/, "/api"),
       },
     },
   },

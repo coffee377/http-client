@@ -27,7 +27,7 @@
 </template>
 
 <script setup lang="ts">
-import GitHubUser from "@@/demo/components/GitHubUser.vue";
+import GitHubUser from "./GitHubUser.vue";
 import { ref } from "vue";
 
 const activeKey = ref<string[]>(["http-client"]);

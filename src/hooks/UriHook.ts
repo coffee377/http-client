@@ -52,7 +52,7 @@ class UriHook extends SyncWaterfallHook<[string, UriOptions]> {
 
     /* params 参数处理 */
     this.tap({ name: "params", stage: UriPlugin.PARAMS }, (url, opts) => {
-      const params = new URLSearchParams(opts.params);
+      const params = UriHook.getUrlParams(opts);
       if (params.size == 0) return url;
       // 这里需要处理三种情况：
       // 1. url 中没有 ?，则需要添加 ?
@@ -62,6 +62,17 @@ class UriHook extends SyncWaterfallHook<[string, UriOptions]> {
       const sep = index === -1 ? "?" : index < url.length - 1 ? "&" : "";
       return url + sep + params.toString();
     });
+  }
+
+  public static getUrlParams(opts: UriOptions) {
+    if (typeof opts.params == "object") {
+      const result: string | Record<string, string> | URLSearchParams = {};
+      for (const [key, value] of Object.entries(opts.params)) {
+        if (value) Reflect.set(result, key, String(value));
+      }
+      return new URLSearchParams(result);
+    }
+    return new URLSearchParams(opts.params);
   }
 }
 

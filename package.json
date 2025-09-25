@@ -8,6 +8,7 @@
   "unpkg": "dist/umd/http-client.min.js",
   "type": "module",
   "scripts": {
+    "tsup": "tsup",
     "dev": "vite",
     "test": "jest",
     "clean": "shx rm -rf coverage dist",
@@ -40,6 +41,7 @@
     "ant-design-vue": "^4.2.6",
     "autoprefixer": "^10.4.21",
     "babel-jest": "^30.1.2",
+    "deep-chat": "^2.2.2",
     "father": "^4.6.5",
     "jest": "^30.1.3",
     "less": "^4.4.1",
@@ -55,6 +57,7 @@
     "socket.io-client": "^4.8.1",
     "tailwindcss": "^4.1.13",
     "ts-jest": "^29.4.4",
+    "tsup": "^8.5.0",
     "typescript": "^5.9.2",
     "unplugin-vue-components": "^29.0.0",
     "vite": "^7.1.6",
