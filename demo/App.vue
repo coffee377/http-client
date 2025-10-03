@@ -6,7 +6,7 @@
       },
     }"
   >
-    <http-client />
+    <!--    <http-client />-->
     <Chat />
   </a-config-provider>
 </template>
